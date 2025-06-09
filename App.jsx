@@ -1,10 +1,17 @@
-import React from 'react'
-import Navbar from './src/Components/Navbar/Navbar'
+import 'react-native-gesture-handler';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import AppNavigator from './src/routes/AppNavigator';
 
-export default function App() {
+const App = () => {
   return (
-    <div>
-      <Navbar/>
-    </div>
-  )
-}
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <AppNavigator />
+      </NavigationContainer>
+    </SafeAreaProvider>
+  );
+};
+
+export default App;
