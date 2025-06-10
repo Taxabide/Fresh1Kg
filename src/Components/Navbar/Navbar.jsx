@@ -17,8 +17,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import UserMenu from '../Navbar/UserMenu';
 import CartMenu from '../Navbar/CartMenu';
+import { useSelector } from 'react-redux';
 
 
 const { width, height } = Dimensions.get('window');
@@ -31,6 +31,9 @@ const Navbar = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('Menu');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState({});
+
+  // Get user login status from Redux store
+  const isLoggedIn = useSelector(state => state.user.isLoggedIn);
 
   // Get dynamic dimensions for responsive design
   const screenData = Dimensions.get('window');
@@ -399,7 +402,23 @@ const handleMenuItemPress = (item) => {
 
             {/* Right Icons Section */}
             <View style={styles.iconsContainer}>
-              <UserMenu />
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={() => {
+                  if (isLoggedIn) {
+                    navigation.navigate('ProfileScreen');
+                  } else {
+                    navigation.navigate('SignInScreen');
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <MaterialIcons 
+                  name="person" 
+                  size={24} 
+                  color={isLoggedIn ? "#7CB342" : "#333"}
+                />
+              </TouchableOpacity>
               
               <TouchableOpacity 
                 style={styles.iconButton}
