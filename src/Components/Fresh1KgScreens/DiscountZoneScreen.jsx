@@ -9,11 +9,16 @@ import {
   SafeAreaView,
   StatusBar,
   ImageBackground,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { useSelector, useDispatch } from 'react-redux';
+import { addToCart } from '../../redux/actions/cartActions';
 
-const ProductsWithDiscounts = () => {
+const ProductsWithDiscounts = ({ navigation }) => {
   const [quantities, setQuantities] = useState({});
+  const dispatch = useDispatch();
+  const user = useSelector(state => state.user.user);
 
   const updateQuantity = (productId, change) => {
     setQuantities(prev => ({
@@ -24,10 +29,15 @@ const ProductsWithDiscounts = () => {
 
   const getQuantity = (productId) => quantities[productId] || 1;
 
-  const addToCart = (product) => {
-    const quantity = quantities[product.id] || 1;
-    console.log(`Added ${quantity} x ${product.name} to cart`);
-    // Implement your add to cart logic here
+  const addToCartHandler = (product) => {
+    if (!user || !user.u_id) {
+      Alert.alert('Login Required', 'Please log in to add items to your cart.', [
+        { text: 'OK', onPress: () => navigation.navigate('SignInScreen') },
+      ]);
+      return;
+    }
+    const quantity = getQuantity(product.id);
+    dispatch(addToCart(product.id, user.u_id, quantity));
   };
 
   const products = [
@@ -112,10 +122,10 @@ const ProductsWithDiscounts = () => {
           </View>
           <TouchableOpacity 
             style={styles.addButton} 
-            onPress={() => addToCart(product)}
+            onPress={() => addToCartHandler(product)}
           >
             <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <Text style={styles.addButtonText}>Add </Text>
+              <Text style={styles.addButtonText}>Add</Text>
               <Icon name="shopping-cart" size={14} color="#fff" />
             </View>
           </TouchableOpacity>
@@ -196,7 +206,7 @@ const styles = StyleSheet.create({
   },
   promoOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Semi-transparent overlay for better text readability
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: 12,
     padding: 16,
     justifyContent: 'center',
@@ -328,7 +338,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     fontWeight: '600',
-    marginRight: 4, // Add some spacing between text and icon
+    marginRight: 4,
   },
 });
 

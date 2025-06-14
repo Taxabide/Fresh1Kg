@@ -79,7 +79,6 @@ const GroceryDealsScrollView = () => {
   }, [currentSlide]);
 
   const handleCardPress = (item) => {
-    console.log('Card pressed:', item.title);
     // Handle navigation or action here
   };
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,10 @@ const ProfileScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const user = useSelector(state => state.user.user); // Get user data from Redux
+
+  useEffect(() => {
+    // 
+  }, [user]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -53,7 +57,7 @@ const ProfileScreen = () => {
       </SafeAreaView>
     );
   }
-
+  
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -71,7 +75,7 @@ const ProfileScreen = () => {
             <MaterialIcons name="account-circle" size={100} color="#7CB342" />
           )}
         </View>
-        <Text style={styles.userName}>{user.u_name || user.name || 'N/A'}</Text>
+        <Text key={user?.u_id} style={styles.userName}>{user.u_name || 'N/A'}</Text>
         <Text style={styles.userEmail}>{user.u_email || user.email || 'N/A'}</Text>
         <Text style={styles.userPhone}>{user.u_number || user.phone || 'N/A'}</Text>
       </View>

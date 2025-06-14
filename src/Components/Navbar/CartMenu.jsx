@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,49 +8,30 @@ import {
   Image,
   SafeAreaView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateCartItemQuantity, removeCartItem, fetchCart } from '../../redux/actions/cartActions';
 
-const FlipkartCart = () => {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: 'Fresh Fruits',
-      variant: '1kg Mixed Fruit',
-      price: 30,
-      originalPrice: 40,
-      discount: 25,
-      quantity: 2,
-      image: require('../../assets/images/fruit.png'),
-      seller: 'Fresh1Kg',
-      delivery: 'Delivery Today, 6 PM - 8 PM',
-      offers: ['10% Off', 'No Delivery Charges'],
-    },
-    {
-      id: 2,
-      name: 'Pumpkin',
-      variant: '1 kg',
-      price: 25,
-      originalPrice: 35,
-      discount: 28,
-      quantity: 1,
-      image: require('../../assets/images/pumpkin.png'),
-      seller: 'Fresh1Kg',
-      delivery: 'Delivery Tomorrow Morning',
-      offers: ['Combo Offer'],
-    },
-  ]);
+const CartMenu = () => {
+  const dispatch = useDispatch();
+  const cartItems = useSelector(state => state.cart.items);
+  const user = useSelector(state => state.user.user);
+  const cartLoading = useSelector(state => state.cart.loading);
+  const cartError = useSelector(state => state.cart.error);
+
+  useEffect(() => {
+    if (user && user.u_id) {
+      dispatch(fetchCart(user.u_id));
+    } else {
+      // 
+    }
+  }, [dispatch, user]);
 
   const updateQuantity = (id, increment) => {
-    setCartItems(prev =>
-      prev.map(item => {
-        if (item.id === id) {
-          const newQuantity = increment ? item.quantity + 1 : item.quantity - 1;
-          return newQuantity > 0 ? { ...item, quantity: newQuantity } : item;
-        }
-        return item;
-      })
-    );
+    const change = increment ? 1 : -1;
+    dispatch(updateCartItemQuantity(id, change));
   };
 
   const removeItem = (id) => {
@@ -62,69 +43,74 @@ const FlipkartCart = () => {
         {
           text: 'Remove',
           style: 'destructive',
-          onPress: () => setCartItems(prev => prev.filter(item => item.id !== id))
+          onPress: () => dispatch(removeCartItem(id))
         }
       ]
     );
   };
 
   const getTotalAmount = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cartItems.reduce((total, item) => total + (item.p_price * item.quantity), 0);
   };
 
   const getTotalSavings = () => {
     return cartItems.reduce((total, item) => 
-      total + ((item.originalPrice - item.price) * item.quantity), 0
+      total + ((item.original_price - item.p_price) * item.quantity), 0
     );
   };
 
   const CartItem = ({ item }) => (
     <View style={styles.cartItem}>
-      <Image source={item.image} style={styles.productImage} />
+      <Image 
+        source={{ uri: `https://fresh1kg.com/assets/images/products-images/${String(item.p_image)}` }} 
+        style={styles.productImage} 
+        onError={(e) => {}}
+      />
       
       <View style={styles.productDetails}>
         <Text style={styles.productName} numberOfLines={2}>
-          {item.name}
+          {String(item.p_name)}
         </Text>
-        <Text style={styles.productVariant}>{item.variant}</Text>
+        {item.p_weight && item.p_unit && <Text style={styles.productVariant}>{String(item.p_weight)} {String(item.p_unit)}</Text>}
         
         <View style={styles.sellerInfo}>
-          <Text style={styles.sellerText}>Sold by: {item.seller}</Text>
+          <Text style={styles.sellerText}>Sold by: Fresh1Kg</Text>
         </View>
 
         <View style={styles.offersContainer}>
-          {item.offers.map((offer, index) => (
-            <View key={index} style={styles.offerTag}>
-              <Text style={styles.offerText}>{offer}</Text>
-            </View>
-          ))}
+          <View style={styles.offerTag}>
+            <Text style={styles.offerText}>10% Off</Text>
+          </View>
+          <View style={styles.offerTag}>
+            <Text style={styles.offerText}>No Delivery Charges</Text>
+          </View>
         </View>
 
         <View style={styles.priceContainer}>
-          <Text style={styles.currentPrice}>₹{item.price.toLocaleString()}</Text>
-          <Text style={styles.originalPrice}>₹{item.originalPrice.toLocaleString()}</Text>
-          <Text style={styles.discount}>{item.discount}% off</Text>
+          <Text style={styles.currentPrice}>₹{String(item.p_price)}</Text>
+          {item.original_price && <Text style={styles.originalPrice}>₹{String(item.original_price)}</Text>}
+          <Text style={styles.discount}>25% off</Text>
         </View>
 
         <Text style={styles.deliveryInfo}>
           <Icon name="local-shipping" size={14} color="#388e3c" />
-          {' '}{item.delivery}
+          {' '}{`Delivery Today, 6 PM - 8 PM`}
         </Text>
 
         <View style={styles.actionButtons}>
           <View style={styles.quantityContainer}>
             <TouchableOpacity
               style={styles.quantityButton}
-              onPress={() => updateQuantity(item.id, false)}
+              onPress={() => updateQuantity(item.cart_id, false)}
             >
               <Icon name="remove" size={16} color="#2874f0" />
             </TouchableOpacity>
             <View style={styles.quantityBox}>
-              <Text style={styles.quantityText}>{item.quantity}</Text>
+              <Text style={styles.quantityText}>{String(item.quantity)}</Text>
             </View>
             <TouchableOpacity
               style={styles.quantityButton}
-              onPress={() => updateQuantity(item.id, true)}
+              onPress={() => updateQuantity(item.cart_id, true)}
             >
               <Icon name="add" size={16} color="#2874f0" />
             </TouchableOpacity>
@@ -132,7 +118,7 @@ const FlipkartCart = () => {
 
           <TouchableOpacity
             style={styles.removeButton}
-            onPress={() => removeItem(item.id)}
+            onPress={() => removeItem(item.cart_id)}
           >
             <Text style={styles.removeText}>REMOVE</Text>
           </TouchableOpacity>
@@ -149,100 +135,114 @@ const FlipkartCart = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={() => { /* Implement back navigation */ }}>
           <Icon name="arrow-back" size={24} color="#2874f0" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Cart ({cartItems.length})</Text>
+        <Text style={styles.headerTitle}>My Cart ({String(cartItems.length)})</Text>
       </View>
 
-      <ScrollView style={styles.scrollView}>
-        {/* Delivery Address */}
-        <View style={styles.deliverySection}>
-          <View style={styles.deliveryHeader}>
-            <Icon name="location-on" size={20} color="#2874f0" />
-            <Text style={styles.deliveryTitle}>Deliver to</Text>
-          </View>
-          <Text style={styles.deliveryAddress}>Gaurav Sir, 248007</Text>
-          <Text style={styles.deliverySubtext}>
-            Home - Bhauwala Dehradun
-          </Text>
-          <TouchableOpacity>
-            <Text style={styles.changeAddress}>CHANGE ADDRESS</Text>
-          </TouchableOpacity>
+      {cartLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#7CB342" />
+          <Text style={styles.loadingText}>Loading cart...</Text>
         </View>
-
-        {/* Cart Items */}
-        {cartItems.map(item => (
-          <CartItem key={item.id} item={item} />
-        ))}
-
-        {/* Offers Section */}
-        <View style={styles.offersSection}>
-          <TouchableOpacity style={styles.offersHeader}>
-            <Icon name="local-offer" size={20} color="#ff6f00" />
-            <Text style={styles.offersTitle}>Available Offers</Text>
-            <Icon name="keyboard-arrow-right" size={20} color="#878787" />
-          </TouchableOpacity>
+      ) : cartError ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{String(cartError || 'An error occurred. Please try again.')}</Text>
         </View>
-
-        {/* Price Details */}
-        <View style={styles.priceDetails}>
-          <Text style={styles.priceDetailsTitle}>PRICE DETAILS</Text>
-          
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>
-              Price ({cartItems.reduce((sum, item) => sum + item.quantity, 0)} items)
+      ) : cartItems.length > 0 ? (
+        <ScrollView style={styles.scrollView}>
+          {/* Delivery Address */}
+          <View style={styles.deliverySection}>
+            <View style={styles.deliveryHeader}>
+              <Icon name="location-on" size={20} color="#2874f0" />
+              <Text style={styles.deliveryTitle}>Deliver to</Text>
+            </View>
+            <Text style={styles.deliveryAddress}>Gaurav Sir, 248007</Text>
+            <Text style={styles.deliverySubtext}>
+              Home - Bhauwala Dehradun
             </Text>
-            <Text style={styles.priceValue}>
-              ₹{cartItems.reduce((total, item) => 
-                total + (item.originalPrice * item.quantity), 0
-              ).toLocaleString()}
+            <TouchableOpacity>
+              <Text style={styles.changeAddress}>CHANGE ADDRESS</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Cart Items */}
+          {cartItems.map(item => (
+            <CartItem key={String(item.cart_id)} item={item} />
+          ))}
+
+          {/* Offers Section */}
+          <View style={styles.offersSection}>
+            <TouchableOpacity style={styles.offersHeader}>
+              <Icon name="local-offer" size={20} color="#ff6f00" />
+              <Text style={styles.offersTitle}>Available Offers</Text>
+              <Icon name="keyboard-arrow-right" size={20} color="#878787" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Price Details */}
+          <View style={styles.priceDetails}>
+            <Text style={styles.priceDetailsTitle}>PRICE DETAILS</Text>
+            
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>
+                Price ({String(cartItems.reduce((sum, item) => sum + item.quantity, 0))} items)
+              </Text>
+              <Text style={styles.priceValue}>
+                ₹{String(cartItems.reduce((total, item) => 
+                  total + (item.original_price * item.quantity), 0
+                ).toLocaleString())}
+              </Text>
+            </View>
+
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>Discount</Text>
+              <Text style={styles.discountValue}>
+                −₹{String(getTotalSavings().toLocaleString())}
+              </Text>
+            </View>
+
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>Delivery Charges</Text>
+              <Text style={styles.freeDelivery}>FREE</Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total Amount</Text>
+              <Text style={styles.totalAmount}>₹{String(getTotalAmount().toLocaleString())}</Text>
+            </View>
+
+            <Text style={styles.savings}>
+              You will save ₹{String(getTotalSavings().toLocaleString())} on this order
             </Text>
           </View>
-
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Discount</Text>
-            <Text style={styles.discountValue}>
-              −₹{getTotalSavings().toLocaleString()}
-            </Text>
-          </View>
-
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Delivery Charges</Text>
-            <Text style={styles.freeDelivery}>FREE</Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalAmount}>₹{getTotalAmount().toLocaleString()}</Text>
-          </View>
-
-          <Text style={styles.savings}>
-            You will save ₹{getTotalSavings().toLocaleString()} on this order
-          </Text>
+        </ScrollView>
+      ) : (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Your cart is empty.</Text>
         </View>
-      </ScrollView>
+      )}
 
       {/* Bottom Action Bar */}
-      <View style={styles.bottomBar}>
-        <View style={styles.totalSection}>
-          <Text style={styles.bottomTotal}>₹{getTotalAmount().toLocaleString()}</Text>
-          <Text style={styles.bottomSavings}>
-            Total Savings ₹{getTotalSavings().toLocaleString()}
-          </Text>
+      {cartItems.length > 0 && (
+        <View style={styles.bottomBar}>
+          <View style={styles.totalSection}>
+            <Text style={styles.bottomTotal}>₹{String(getTotalAmount().toLocaleString())}</Text>
+            <Text style={styles.bottomSavings}>
+              Total Savings ₹{String(getTotalSavings().toLocaleString())}
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.placeOrderButton}>
+            <Text style={styles.placeOrderText}>PLACE ORDER</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.placeOrderButton}>
-          <Text style={styles.placeOrderText}>PLACE ORDER</Text>
-        </TouchableOpacity>
-      </View>
+      )}
     </SafeAreaView>
   );
 };
-
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -533,6 +533,39 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 200,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 200,
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: 'red',
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 200,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+  },
 });
 
-export default FlipkartCart;
+export default CartMenu;

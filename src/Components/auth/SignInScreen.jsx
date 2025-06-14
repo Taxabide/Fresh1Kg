@@ -30,7 +30,7 @@ const SignInScreen = () => {
     // Only show login success alert and navigate if a login was attempted from this screen
     if (isLoggedIn && loginAttempted) {
       Alert.alert('Success!', 'Logged in successfully! Welcome back.');
-      navigation.navigate('HomeScreen'); // Navigate to HomeScreen on successful login
+      navigation.navigate('HomeScreen', { userId: user.u_id }); // Navigate to HomeScreen on successful login
       setLoginAttempted(false); // Reset after successful login
     }
     if (error && !loading) {

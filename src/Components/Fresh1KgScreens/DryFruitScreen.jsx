@@ -14,21 +14,33 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useSelector, useDispatch } from 'react-redux';
 import { searchProducts } from '../../redux/actions/productActions';
-import { addToCart } from '../../redux/actions/cartActions';
+import { addToCart, fetchCart } from '../../redux/actions/cartActions';
+import { addToWishlist } from '../../redux/actions/wishlistActions';
+import { useNavigation } from '@react-navigation/native';
 
-const BestSellingScreen = ({ navigation }) => {
+const DryFruitScreen = () => {
+  const navigation = useNavigation();
   const [quantities, setQuantities] = useState({});
   const dispatch = useDispatch();
   const { products, loading, error } = useSelector(state => state.products);
-  const user = useSelector(state => state.user.user);
+  const user = useSelector(state => state.user.user); // Get user data from Redux
+  const { addToWishlistLoading, addToWishlistError, addToWishlistMessage } = useSelector(state => state.wishlist);
+
+  // console.log('DryFruitScreen - User object from Redux:', user);
 
   useEffect(() => {
-    // Dispatch action to fetch dry fruits (p_category_id = 3)
-    dispatch(searchProducts(3));
-  }, [dispatch]);
+    // Dispatch action to fetch dry fruits (p_category_id = 3) only if data is not already loaded
+    if (!products['3'] || products['3'].length === 0) {
+      dispatch(searchProducts(3));
+    }
+    // Fetch cart items when the component mounts or user changes (if applicable)
+    if (user && user.u_id) {
+      dispatch(fetchCart(user.u_id));
+    }
+  }, [dispatch, products, user]);
 
-  // Filter and limit to dry fruits (assuming categoryId 3) and first 4 items
-  const dryFruitsToDisplay = products[3] ? products[3].slice(0, 4) : [];
+  // Filter and limit to dry fruits (assuming categoryId 3) and first 6 items
+  const dryFruitsToDisplay = Array.isArray(products['3']) ? products['3'].slice(0, 6) : [];
 
   const getQuantity = (productId) => {
     return quantities[productId] || 1;
@@ -49,7 +61,26 @@ const BestSellingScreen = ({ navigation }) => {
       return;
     }
     const quantity = getQuantity(product.p_id);
+    // console.log(`Attempting to add ${quantity} x ${String(product.p_name)} to cart for user ${user.u_id}`);
+    // console.log('Dispatching addToCart with product_id:', product.p_id, 'and user_id:', user.u_id, 'and quantity:', quantity);
+    // Dispatch the Redux action to add to cart via API
     dispatch(addToCart(product.p_id, user.u_id, quantity));
+    
+  };
+
+  const addToWishlistHandler = async (item) => {
+    if (!user || !user.u_id) {
+      Alert.alert('Login Required', 'Please log in to add items to your wishlist.', [
+        { text: 'OK', onPress: () => navigation.navigate('SignInScreen') },
+      ]);
+      return;
+    }
+    try {
+      await dispatch(addToWishlist(item.p_id, user.u_id));
+    } catch (error) {
+      // console.error('Failed to add item to wishlist:', error);
+      Alert.alert('Error', 'Failed to add item to wishlist. Please try again.');
+    }
   };
 
   const renderProduct = ({ item }) => (
@@ -59,11 +90,23 @@ const BestSellingScreen = ({ navigation }) => {
         <Text style={styles.discountText}>25%</Text>
         <Text style={styles.offText}>Off</Text>
       </View>
+      <TouchableOpacity 
+        style={styles.wishlistIconContainer}
+        onPress={() => addToWishlistHandler(item)}
+        disabled={addToWishlistLoading}
+      >
+        <Icon 
+          name="heart" 
+          size={18} 
+          color={addToWishlistLoading ? '#ccc' : '#e74c3c'} 
+        />
+      </TouchableOpacity>
       <Image 
         source={{ uri: `https://fresh1kg.com/assets/images/products-images/${String(item.p_image)}` }} 
         style={styles.productImage} 
         resizeMode="contain" 
-        onError={(e) => { /* */ }}
+        onError={(e) => { // 
+         }}
       />
       <View style={styles.productInfo}>
         <Text style={styles.productName} numberOfLines={2}>{String(item.p_name)}</Text>
@@ -191,17 +234,36 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD54F',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 5,
+    borderRadius: 6,
     zIndex: 1,
   },
   discountText: {
     fontSize: 12,
     fontWeight: 'bold',
     color: '#333',
+    textAlign: 'center',
   },
   offText: {
     fontSize: 10,
     color: '#333',
+    textAlign: 'center',
+  },
+  wishlistIconContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
   },
   productImage: {
     width: '100%',
@@ -237,28 +299,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#e74c3c',
+    marginRight: 8,
   },
   originalPrice: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: 14,
+    color: '#888',
     textDecorationLine: 'line-through',
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
   },
   quantitySelector: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 5,
+    borderRadius: 6,
   },
   quantityButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
   },
   quantityButtonText: {
     fontSize: 16,
@@ -266,24 +335,26 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   quantityText: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
   },
   addButton: {
-    backgroundColor: '#28a745',
+    backgroundColor: '#068A4F',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 5,
-    marginLeft: 10,
+    borderRadius: 6,
+    marginLeft: 12,
+    minWidth: 70,
+    alignItems: 'center',
   },
   addButtonText: {
     color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
-    marginRight: 5,
+    marginRight: 4,
   },
 });
 
-export default BestSellingScreen; 
+export default DryFruitScreen;

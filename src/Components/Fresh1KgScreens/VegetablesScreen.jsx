@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,217 +7,435 @@ import {
   Image,
   StyleSheet,
   Dimensions,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { useSelector, useDispatch } from 'react-redux';
+import { searchProducts } from '../../redux/actions/productActions';
+import { addToCart, fetchCart } from '../../redux/actions/cartActions';
+import { addToWishlist } from '../../redux/actions/wishlistActions';
+import { useNavigation } from '@react-navigation/native';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-const CategoryScroll = () => {
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const scrollViewRef = useRef(null);
+const VegetablesScreen = () => {
+  const navigation = useNavigation();
+  const [quantities, setQuantities] = useState({});
+  const scrollRef = useRef(null);
+  const [scrollX, setScrollX] = useState(0);
 
-  const originalCategories = [
-    {
-      id: 1,
-      title: 'Root\nVegetables',
-      image: require('../../assets/images/root.png'),
-    },
-    {
-      id: 2,
-      title: 'Seasonal\nFruits',
-      image: require('../../assets/images/seasonal.png'),
-    },
-    {
-      id: 3,
-      title: 'Organic\nFruits',
-      image: require('../../assets/images/organic.png'),
-    },
-    {
-      id: 4,
-      title: 'Fruit\nBaskets',
-      image: require('../../assets/images/fruit.png'),
-    },
-    {
-      id: 5,
-      title: 'Snacking\nDry\nFruits,Seeds',
-      image: require('../../assets/images/dry.png'),
-    },
-    {
-      id: 6,
-      title: 'Dry Fruits\n& Berries',
-      image: require('../../assets/images/berries.png'),
-    },
-    {
-      id: 7,
-      title: 'Organic\nDry Fruits',
-      image: require('../../assets/images/organic-dry.png'),
-    },
-    {
-      id: 8,
-      title: 'Organic\nVegetables',
-      image: require('../../assets/images/OrgaVeg.png'),
-    },
-    {
-      id: 9,
-      title: 'Leafy\nVegetables',
-      image: require('../../assets/images/leaf.png'),
-    },
-    {
-      id: 10,
-      title: 'Gourd,\nPumpkin,\nDrumstick',
-      image: require('../../assets/images/pumpkin.png'),
-    },
-  ];
+  const dispatch = useDispatch();
+  const { products, loading, error } = useSelector(state => state.products);
+  const user = useSelector(state => state.user.user);
+  const { addToCartLoading, addToCartError, addToCartMessage } = useSelector(state => state.cart);
+  const { addToWishlistLoading, addToWishlistError, addToWishlistMessage } = useSelector(state => state.wishlist);
 
-  // Create infinite scroll by duplicating items
-  const categories = [
-    ...originalCategories.map(item => ({ ...item, id: `end-${item.id}` })), // Last items at beginning
-    ...originalCategories, // Original items
-    ...originalCategories.map(item => ({ ...item, id: `start-${item.id}` })), // First items at end
-  ];
+  // console.log('VegetablesScreen - User object from Redux:', user);
 
-  const itemWidth = 92; // item width + margins (80 + 12)
-  const totalOriginalWidth = originalCategories.length * itemWidth;
-
-  const handleCategoryPress = (categoryId) => {
-    // Extract original ID if it's a duplicated item
-    const originalId = categoryId.toString().includes('-') ? 
-      parseInt(categoryId.toString().split('-')[1]) : categoryId;
-    setSelectedCategory(originalId);
-    console.log('Selected category:', originalId);
-  };
-
-  const handleScroll = (event) => {
-    const { contentOffset } = event.nativeEvent;
-    const scrollX = contentOffset.x;
+  useEffect(() => {
+    // Dispatch action to fetch vegetables (p_category_id = 2) only if data is not already loaded
+    if (!products['2'] || products['2'].length === 0) {
+      dispatch(searchProducts(2)); 
+    }
     
-    // If scrolled past the original items to the right (into the duplicated start items)
-    if (scrollX >= totalOriginalWidth * 2) {
-      scrollViewRef.current?.scrollTo({ x: totalOriginalWidth, animated: false });
+    // Only fetch cart if user is logged in and cart fetch is supported
+    if (user && user.u_id) {
+      // Try to fetch cart but handle errors gracefully
+      dispatch(fetchCart(user.u_id)).catch(error => {
+        // console.warn('Failed to fetch cart on component mount:', error);
+        // Don't show error to user unless it's critical
+      });
     }
-    // If scrolled past the original items to the left (into the duplicated end items)
-    else if (scrollX <= 0) {
-      scrollViewRef.current?.scrollTo({ x: totalOriginalWidth, animated: false });
+  }, [dispatch, products, user]);
+
+  // Show success/error messages for add to cart
+  // useEffect(() => {
+  //   if (addToCartMessage) {
+  //     Alert.alert('Success', addToCartMessage);
+  //   }
+  //   if (addToCartError && !addToCartError.includes('cart')) {
+  //     // Only show cart-related errors if they're not about fetching cart
+  //     Alert.alert('Error', addToCartError);
+  //   }
+  // }, [addToCartMessage, addToCartError]);
+
+  // Limit to 6 items
+  const vegetablesToDisplay = Array.isArray(products['2']) ? products['2'].slice(0, 6) : [];
+
+  const scrollAmount = 220; // width of item + marginRight
+
+  const updateQuantity = (itemId, operation) => {
+    setQuantities((prev) => {
+      const currentQty = prev[itemId] || 1;
+      const newQty = operation === 'increment' ? currentQty + 1 : Math.max(1, currentQty - 1);
+      return { ...prev, [itemId]: newQty };
+    });
+  };
+
+  const addToCartHandler = async (item) => {
+    if (!user || !user.u_id) {
+      Alert.alert('Login Required', 'Please log in to add items to your cart.', [
+        { text: 'OK', onPress: () => navigation.navigate('SignInScreen') },
+      ]);
+      return;
+    }
+    
+    const quantity = quantities[item.p_id] || 1;
+    // console.log(`Attempting to add ${quantity} x ${item.p_name} to cart for user ${user.u_id}`);
+    
+    try {
+      await dispatch(addToCart(item.p_id, user.u_id, quantity));
+      // Reset quantity after successful add
+      setQuantities(prev => ({ ...prev, [item.p_id]: 1 }));
+    } catch (error) {
+      // console.error('Failed to add item to cart:', error);
+      Alert.alert('Error', 'Failed to add item to cart. Please try again.');
     }
   };
 
-  const handleScrollEnd = () => {
-    // Start from the middle section after component mounts
-    setTimeout(() => {
-      scrollViewRef.current?.scrollTo({ x: totalOriginalWidth, animated: false });
-    }, 100);
+  const addToWishlistHandler = async (item) => {
+    if (!user || !user.u_id) {
+      Alert.alert('Login Required', 'Please log in to add items to your wishlist.', [
+        { text: 'OK', onPress: () => navigation.navigate('SignInScreen') },
+      ]);
+      return;
+    }
+    try {
+      void await dispatch(addToWishlist(item.p_id, user.u_id));
+    } catch (error) {
+      // console.error('Failed to add item to wishlist:', error);
+      Alert.alert('Error', 'Failed to add item to wishlist. Please try again.');
+    }
   };
 
-  const renderCategoryItem = (item) => (
-    <TouchableOpacity
-      key={item.id}
-      style={[
-        styles.categoryItem,
-        (selectedCategory === parseInt(item.id.toString().split('-')[1] || item.id)) && styles.selectedCategoryItem,
-      ]}
-      onPress={() => handleCategoryPress(item.id)}
-      activeOpacity={0.7}
-    >
+  const renderGroceryItem = (item) => (
+    <View key={item.p_id} style={styles.itemContainer}>
       <View style={styles.imageContainer}>
+        {/* Wishlist Icon */}
+        <TouchableOpacity 
+          style={styles.wishlistIconContainer}
+          onPress={() => addToWishlistHandler(item)}
+          disabled={addToWishlistLoading}
+        >
+          <Icon 
+            name="heart" 
+            size={18} 
+            color={addToWishlistLoading ? '#ccc' : '#e74c3c'} 
+          />
+        </TouchableOpacity>
         <Image 
-          source={item.image} 
-          style={styles.categoryImage} 
-          resizeMode="cover"
-          onError={(error) => console.log('Image load error:', error)}
-          onLoad={() => console.log('Image loaded successfully')}
+          source={{ uri: `https://fresh1kg.com/assets/images/products-images/${String(item.p_image)}` }} 
+          style={styles.productImage} 
+          resizeMode="contain" 
         />
       </View>
-      <Text style={styles.categoryTitle}>{item.title}</Text>
-    </TouchableOpacity>
+
+      <View style={styles.productInfo}>
+        <Text style={styles.productName} numberOfLines={2}>
+          {String(item.p_name)}
+        </Text>
+        <Text style={styles.productWeight}>Weight: {String(item.p_weight)} {String(item.p_unit)}</Text>
+
+        <View style={styles.priceContainer}>
+          <Text style={styles.currentPrice}>₹{String(item.p_price)}</Text>
+          {item.original_price && <Text style={styles.originalPrice}>₹{String(item.original_price)}</Text>}
+        </View>
+
+        <View style={styles.actionContainer}>
+          <View style={styles.quantitySelector}>
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() => updateQuantity(item.p_id, 'decrement')}
+            >
+              <Text style={styles.quantityButtonText}>-</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.quantityText}>{String(quantities[item.p_id] || 1)}</Text>
+
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() => updateQuantity(item.p_id, 'increment')}
+            >
+              <Text style={styles.quantityButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.addButton, addToCartLoading && styles.addButtonDisabled]} 
+            onPress={() => addToCartHandler(item)}
+            disabled={addToCartLoading}
+          >
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              {addToCartLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Text style={styles.addButtonText}>Add </Text>
+                  <Icon name="shopping-cart" size={14} color="#fff" />
+                </>
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
   );
+
+  const onScroll = (event) => {
+    setScrollX(event.nativeEvent.contentOffset.x);
+  };
+
+  const handleScrollButton = (direction) => {
+    if (scrollRef.current) {
+      let newX = direction === 'right' ? scrollX + scrollAmount : scrollX - scrollAmount;
+      newX = Math.max(0, newX);
+      scrollRef.current.scrollTo({ x: newX, animated: true });
+      setScrollX(newX);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContainer}
-        decelerationRate="fast"
-        snapToInterval={itemWidth}
-        snapToAlignment="start"
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        onContentSizeChange={handleScrollEnd}
-      >
-        {categories.map(renderCategoryItem)}
-      </ScrollView>
+      <View style={styles.header}>
+        <Text style={styles.title}>Fresh Vegetables</Text>
+        <View style={styles.navigationContainer}>
+          <TouchableOpacity style={styles.navButton} onPress={() => handleScrollButton('left')}>
+            <Text style={styles.navButtonText}>‹</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navButton} onPress={() => handleScrollButton('right')}>
+            <Text style={styles.navButtonText}>›</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#7CB342" style={styles.loadingIndicator} />
+      ) : error ? (
+        <Text style={styles.errorText}>Error: {String(error)}</Text>
+      ) : vegetablesToDisplay.length > 0 ? (
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContainer}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+        >
+          {vegetablesToDisplay.map(renderGroceryItem)}
+        </ScrollView>
+      ) : (
+        <Text style={styles.noDataText}>No vegetables found.</Text>
+      )}
     </View>
   );
 };
 
-// Update these styles in your StyleSheet.create section:
-
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 15, // Increased from 7 to 15
-    paddingBottom: 20,   // Added extra bottom padding
+    flex: 1,
     backgroundColor: '#f8f9fa',
-    minHeight: 140,      // Added minimum height to ensure enough space
-    marginTop:-10
+    paddingVertical: 15,
+    paddingBottom: 25,
+    minHeight: 400,
   },
-  scrollContainer: {
-    paddingHorizontal: 10,
-    paddingBottom: 10,   // Added bottom padding to scroll container
-  },
-  categoryItem: {
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginHorizontal: 6,
-    marginBottom: 8,     // Added bottom margin to items
-    width: 80,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
-  selectedCategoryItem: {
-    borderColor: '#4CAF50',
-    borderWidth: 2,
-    backgroundColor: '#f8fff8',
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
   },
-  imageContainer: {
-    width: 50,
-    height: 50,
-    marginBottom: 8,
-    borderRadius: 8,
-    overflow: 'hidden',
+  navigationContainer: {
+    flexDirection: 'row',
+    gap: 8,
   },
-  categoryImage: {
-    width: '100%',
-    height: '100%',
-  },
-  placeholderImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#e8f5e8',
+  navButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  placeholderText: {
-    fontSize: 24,
+  navButtonText: {
+    fontSize: 18,
+    color: '#666',
+    fontWeight: 'bold',
   },
-  categoryTitle: {
-    fontSize: 11,
-    textAlign: 'center',
+  scrollContainer: {
+    paddingLeft: 20,
+    paddingRight: 20,
+    paddingBottom: 15,
+  },
+  itemContainer: {
+    width: 210,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginRight: 20,
+    marginBottom: 10,
+    paddingBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  imageContainer: {
+    position: 'relative',
+    height: 140,
+    backgroundColor: '#f8f9fa',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  wishlistIconContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+  },
+  discountBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    backgroundColor: '#ffc107',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    zIndex: 1,
+  },
+  discountText: {
+    fontSize: 12,
+    fontWeight: 'bold',
     color: '#333',
-    lineHeight: 14,
-    fontWeight: '500',
+    textAlign: 'center',
+  },
+  offText: {
+    fontSize: 10,
+    color: '#333',
+    textAlign: 'center',
+  },
+  productImage: {
+    width: 100,
+    height: 100,
+    resizeMode: 'contain',
+  },
+  productInfo: {
+    padding: 15,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  productWeight: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 12,
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+    gap: 8,
+  },
+  currentPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#e74c3c',
+  },
+  originalPrice: {
+    fontSize: 12,
+    color: '#999',
+    textDecorationLine: 'line-through',
+  },
+  actionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  quantitySelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 6,
+  },
+  quantityButton: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  quantityButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  quantityText: {
+    paddingHorizontal: 12,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  addButton: {
+    backgroundColor: '#28a745',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  addButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginRight: 4,
+  },
+  loadingIndicator: {
+    marginTop: 20,
+    alignSelf: 'center',
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+  },
+  noDataText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+    color: '#666',
   },
 });
 
-export default CategoryScroll;
+export default VegetablesScreen;
