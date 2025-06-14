@@ -7,7 +7,7 @@ import {
   ImageBackground,
   StyleSheet,
   Dimensions,
-} from 'react-native';
+} from 'react-native'
 import LinearGradient from 'react-native-linear-gradient';
 
 const { width } = Dimensions.get('window');
@@ -45,7 +45,7 @@ const WeekendDiscountScreen = () => {
   ];
 
   const handleShopNow = (productId) => {
-    console.log(`Shop now clicked for product ${productId}`);
+    // 
   };
 
   return (

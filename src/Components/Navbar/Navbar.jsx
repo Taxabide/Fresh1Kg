@@ -17,14 +17,18 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import CartMenu from '../Navbar/CartMenu';
-import { useSelector } from 'react-redux';
+import CartMenu from '../../Components/Navbar/CartMenu.jsx';
+import { useSelector, useDispatch } from 'react-redux';
+import { searchProducts } from '../../redux/actions/productActions';
+import { fetchWishlist } from '../../redux/actions/wishlistActions';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 
 const { width, height } = Dimensions.get('window');
 
 const Navbar = ({ navigation }) => {
   const insets = useSafeAreaInsets();
+  const dispatch = useDispatch();
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [slideAnim] = useState(new Animated.Value(width * 0.8));
@@ -34,6 +38,8 @@ const Navbar = ({ navigation }) => {
 
   // Get user login status from Redux store
   const isLoggedIn = useSelector(state => state.user.isLoggedIn);
+  const userId = useSelector(state => state.user.user ? state.user.user.u_id : null);
+  const wishlistItems = useSelector(state => state.wishlistData.items);
 
   // Get dynamic dimensions for responsive design
   const screenData = Dimensions.get('window');
@@ -41,8 +47,24 @@ const Navbar = ({ navigation }) => {
   const isTablet = screenData.width >= 768;
 
   const handleCartPress = () => {
-    console.log('Cart pressed');
+    if (!isLoggedIn || !userId) {
+      Alert.alert('Login Required', 'Please log in to view your cart.', [
+        { text: 'OK', onPress: () => navigation.navigate('SignInScreen') },
+      ]);
+      return;
+    }
     navigation?.navigate('CartMenu');
+  };
+
+  const handleWishlistPress = () => {
+    if (!isLoggedIn || !userId) {
+      Alert.alert('Login Required', 'Please log in to view your wishlist.', [
+        { text: 'OK', onPress: () => navigation.navigate('SignInScreen') },
+      ]);
+      return;
+    }
+    dispatch(fetchWishlist(userId));
+    navigation?.navigate('WishlistScreen');
   };
 
   const handleSearchPress = () => {
@@ -74,12 +96,10 @@ const Navbar = ({ navigation }) => {
   };
 
 const handleMenuItemPress = (item) => {
-  console.log(`${item} pressed`);
-  
   if (navigation) {
     switch(item) {
       case 'Home':
-        navigation.navigate('HomeScreen');  // ✅ Fixed: Home → HomeScreen
+        navigation.navigate('HomeScreen');
         break;
       case 'About':
         navigation.navigate('ProductsScreen', { 
@@ -88,31 +108,33 @@ const handleMenuItemPress = (item) => {
         });
         break;
       case 'Vegetables':
-        navigation.navigate('ProductsScreen', { 
-          category: 'vegetables',
+        navigation.navigate('ProductsScreen', {
+          categoryId: 2,
           title: 'Vegetables',
+          categoryName: 'Vegetables',
           subcategory: 'all'
         });
         break;
       case 'Fruits':
-        navigation.navigate('ProductsScreen', { 
-          category: 'fruits',
+        navigation.navigate('ProductsScreen', {
+          categoryId: 1,
           title: 'Fruits',
+          categoryName: 'Fruits',
           subcategory: 'all'
         });
         break;
       case 'Dry Fruits':
-        navigation.navigate('ProductsScreen', { 
-          category: 'dry-fruits',
+        navigation.navigate('ProductsScreen', {
+          categoryId: 3,
           title: 'Dry Fruits',
+          categoryName: 'Dry Fruits',
           subcategory: 'all'
         });
         break;
       case 'Contact Us':
-        navigation.navigate('ContactScreen');  // ✅ Fixed: Contact → ContactScreen
+        navigation.navigate('ContactScreen');
         break;
       default:
-        console.log(`No navigation defined for ${item}`);
         Alert.alert(
           'Notice',
           `${item} feature is not available yet.`,
@@ -126,8 +148,6 @@ const handleMenuItemPress = (item) => {
 };
 
   const handleCategoryPress = (categoryName, subcategory = null) => {
-    console.log(`Category pressed: ${categoryName}${subcategory ? ` - ${subcategory}` : ''}`);
-    
     if (navigation) {
       switch(categoryName) {
         case 'Breakfast & Dairy':
@@ -158,7 +178,6 @@ const handleMenuItemPress = (item) => {
           navigation.navigate('OtherItems');
           break;
         default:
-          console.log(`No navigation defined for category: ${categoryName}`);
           Alert.alert(
             'Notice',
             `${categoryName} category is not available yet.`,
@@ -172,19 +191,18 @@ const handleMenuItemPress = (item) => {
   };
 
   const handleSearch = () => {
-    console.log('Searching for:', searchQuery);
-    
-    if (navigation && searchQuery.trim()) {
-      navigation.navigate('SearchResults', { query: searchQuery });
+    if (searchQuery.trim() && navigation) {
+      dispatch(searchProducts(searchQuery));
+      navigation.navigate('SearchResultsScreen', { query: searchQuery });
     }
     
     closeSearchModal();
   };
 
   const toggleCategory = (categoryId) => {
-    setExpandedCategories(prev => ({
-      ...prev,
-      [categoryId]: !prev[categoryId]
+    setExpandedCategories(prevState => ({
+      ...prevState,
+      [categoryId]: !prevState[categoryId]
     }));
   };
 
@@ -419,6 +437,18 @@ const handleMenuItemPress = (item) => {
                   color={isLoggedIn ? "#7CB342" : "#333"}
                 />
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={handleWishlistPress}
+                activeOpacity={0.7}
+              >
+                <FontAwesome
+                  name="heart"
+                  size={isSmallScreen ? 22 : isTablet ? 32 : 28}
+                  color="#333"
+                />
+              </TouchableOpacity>
               
               <TouchableOpacity 
                 style={styles.iconButton}
@@ -535,8 +565,16 @@ const handleMenuItemPress = (item) => {
                 style={styles.searchInput}
                 placeholder="Search..."
                 placeholderTextColor="#999"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={handleSearch}
               />
-              <MaterialIcons name="search" size={20} color="#999" style={styles.searchIcon} />
+              <TouchableOpacity 
+                style={styles.searchIconContainer}
+                onPress={handleSearch}
+              >
+                <MaterialIcons name="search" size={20} color="#999" style={styles.searchIcon} />
+              </TouchableOpacity>
             </View>
 
             <View style={styles.tabContainer}>
@@ -774,10 +812,13 @@ logo: {
     color: '#333',
     backgroundColor: '#ffffff',
   },
-  searchIcon: {
+  searchIconContainer: {
     position: 'absolute',
     right: 12,
     top: 12,
+  },
+  searchIcon: {
+    // No position or offset needed here, as it's handled by searchIconContainer
   },
   tabContainer: {
     flexDirection: 'row',

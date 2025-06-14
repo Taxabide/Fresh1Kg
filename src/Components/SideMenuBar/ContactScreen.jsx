@@ -13,6 +13,7 @@ import {
   StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
 
 import Navbar from '../Navbar/Navbar';
 import Footer from '../Footer/Footer';
@@ -20,6 +21,7 @@ import Footer from '../Footer/Footer';
 const { width, height } = Dimensions.get('window');
 
 const MultiStepForm = () => {
+  const navigation = useNavigation();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
@@ -237,7 +239,7 @@ const MultiStepForm = () => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <SafeAreaView style={styles.safeArea}>
-        <Navbar />
+        <Navbar navigation={navigation} />
       </SafeAreaView>
       
       <ScrollView 

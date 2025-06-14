@@ -4,14 +4,15 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native';
 import Navbar from '../Navbar/Navbar';
 import SlideScreen from '../Fresh1KgScreens/SlideScreen';
-import VegetablesScreen from '../Fresh1KgScreens/VegetablesScreen';
-import FeaturedGrocery from '../Fresh1KgScreens/FeaturedGrocery';
+import VegetableItems from '../Fresh1KgScreens/vegetableItems.jsx';
+import FruitScreen from '../Fresh1KgScreens/FruitScreen.jsx';
+import VegetablesScreen from '../Fresh1KgScreens/VegetablesScreen.jsx';
 import PolicyScreen from '../Fresh1KgScreens/PolicyScreen';
 import DiscountZoneScreen from '../Fresh1KgScreens/DiscountZoneScreen';
-import BestSellingScreen from '../Fresh1KgScreens/BestSellingScreen';
 import WeekendDiscountScreen from '../Fresh1KgScreens/WeekendDiscountScreen';
 import TrendingProductScreen from '../Fresh1KgScreens/TrendingProductScreen';
 import Footer from '../Footer/Footer';
+import DryFruitScreen from '../Fresh1KgScreens/DryFruitScreen.jsx';
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,11 +36,11 @@ const HomeScreen = () => {
           bounces={Platform.OS === 'ios'}
         >
           <SlideScreen />
-          <VegetablesScreen />
+          <VegetableItems />
           <PolicyScreen />
-          <FeaturedGrocery />
-          <DiscountZoneScreen />
-          <BestSellingScreen />
+          <VegetablesScreen navigation={navigation} />
+          <FruitScreen navigation={navigation} />
+          <DryFruitScreen navigation={navigation} />
           <WeekendDiscountScreen />
           <TrendingProductScreen />
           <Footer />
