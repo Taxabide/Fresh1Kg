@@ -19,7 +19,7 @@ const SignInScreen = () => {
   const dispatch = useDispatch();
 
   const { user, isLoggedIn, loading, error } = useSelector(state => state.user);
-
+console.log('>>>>>>>>>>>>>>>>>>user',user,isLoggedIn)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -30,7 +30,11 @@ const SignInScreen = () => {
     // Only show login success alert and navigate if a login was attempted from this screen
     if (isLoggedIn && loginAttempted) {
       Alert.alert('Success!', 'Logged in successfully! Welcome back.');
-      navigation.navigate('HomeScreen', { userId: user.u_id }); // Navigate to HomeScreen on successful login
+      if (user && Number(user.u_role) === 1) {
+        navigation.navigate('AdminScreen'); // Navigate to AdminScreen for admin role
+      } else {
+        navigation.navigate('HomeScreen'); // Navigate to HomeScreen for other roles
+      }// Navigate to HomeScreen on successful login
       setLoginAttempted(false); // Reset after successful login
     }
     if (error && !loading) {
