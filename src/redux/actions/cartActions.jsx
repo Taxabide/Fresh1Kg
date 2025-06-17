@@ -196,11 +196,15 @@ export const updateCartItemQuantity = (cartId, userId, change) => async (dispatc
 
 export const removeCartItem = (cartId, userId) => async (dispatch) => {
   try {
+    if (!cartId || !userId) {
+      throw new Error('Cart ID and User ID are required to remove item from cart');
+    }
+
     const formData = new FormData();
-    formData.append('product_id', String(productId));
+    formData.append('a_c_id', String(cartId));
     formData.append('user_id', String(userId));
 
-    const response = await fetch('https://fresh1kg.com/api/remove-cart-api.php', {
+    const response = await fetch('https://fresh1kg.com/api/remove-addtocart-api.php', {
       method: 'POST',
       body: formData,
     });
@@ -208,13 +212,15 @@ export const removeCartItem = (cartId, userId) => async (dispatch) => {
     const data = await response.json();
     
     if (data.status === 'success') {
-      dispatch({ type: REMOVE_CART_ITEM, payload: productId });
+      dispatch({ type: REMOVE_CART_ITEM, payload: cartId });
       // Refresh cart after removal
       await dispatch(fetchCart(userId));
+      Alert.alert('Success', data.message || 'Item removed from cart successfully!');
     } else {
       throw new Error(data.message || 'Failed to remove cart item');
     }
   } catch (error) {
+    Alert.alert('Error', error.message || 'An unexpected error occurred while removing item from cart.');
     throw error;
   }
 };
