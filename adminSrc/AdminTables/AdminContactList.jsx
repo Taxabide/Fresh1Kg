@@ -8,9 +8,12 @@ import {
   TextInput,
   ActivityIndicator,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import Adminnavbar from '../AdminNavbar/Adminavbar';
 import AdminSidebar from '../AdminNavbar/AdminSidebar';
+
+const CONTACT_LIST_API = 'https://fresh1kg.com/api/add-contact-list-api.php';
 
 const AdminContactList = () => {
   const [searchText, setSearchText] = useState('');
@@ -18,64 +21,6 @@ const AdminContactList = () => {
   const [loading, setLoading] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
   
-  // Sample data - Replace with API call
-  const sampleContacts = [
-    {
-      id: 1,
-      name: 'Gemma Horn',
-      email: 'tegatad@mailinator.com',
-      phoneNumber: '51',
-      subject: 'Laboriosam aspernat',
-      message: 'Vel omnis dolor sed',
-      addDate: '13-Jun-2025'
-    },
-    {
-      id: 2,
-      name: 'dev',
-      email: 'demo@gmail.com',
-      phoneNumber: '2345676543',
-      subject: 'demo',
-      message: 'contact',
-      addDate: '13-Jun-2025'
-    },
-    {
-      id: 3,
-      name: 'John Smith',
-      email: 'john.smith@example.com',
-      phoneNumber: '9876543210',
-      subject: 'Product Inquiry',
-      message: 'I would like to know more about your products',
-      addDate: '12-Jun-2025'
-    },
-    {
-      id: 4,
-      name: 'Sarah Johnson',
-      email: 'sarah.j@email.com',
-      phoneNumber: '8765432109',
-      subject: 'Support Request',
-      message: 'Need help with my order',
-      addDate: '11-Jun-2025'
-    },
-    {
-      id: 5,
-      name: 'Michael Brown',
-      email: 'michael.brown@test.com',
-      phoneNumber: '7654321098',
-      subject: 'Feedback',
-      message: 'Great service, keep it up!',
-      addDate: '10-Jun-2025'
-    },
-    {
-      id: 6,
-      name: 'Emily Davis',
-      email: 'emily.davis@sample.com',
-      phoneNumber: '6543210987',
-      subject: 'Partnership',
-      message: 'Interested in business partnership',
-      addDate: '09-Jun-2025'
-    }
-  ];
-
   useEffect(() => {
     fetchContacts();
   }, []);
@@ -83,49 +28,64 @@ const AdminContactList = () => {
   const fetchContacts = async () => {
     setLoading(true);
     try {
-      // API call here
-      // const response = await fetch('YOUR_API_ENDPOINT/contacts');
-      // const data = await response.json();
-      // setContacts(data);
+      const response = await fetch(CONTACT_LIST_API);
+      const responseText = await response.text();
+      const data = await JSON.parse(responseText);
       
-      // For now using sample data
-      setTimeout(() => {
-        setContacts(sampleContacts);
-        setLoading(false);
-      }, 1000);
+      if (data.status === 'success' && Array.isArray(data.data)) {
+        setContacts(data.data);
+      }
     } catch (error) {
       console.error('Error fetching contacts:', error);
+      Alert.alert('Error', 'Failed to fetch contacts. Please try again later.');
+    } finally {
       setLoading(false);
     }
   };
 
   const filteredContacts = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    contact.email.toLowerCase().includes(searchText.toLowerCase()) ||
-    contact.phoneNumber.includes(searchText) ||
-    contact.subject.toLowerCase().includes(searchText.toLowerCase())
+    contact.contact_name.toLowerCase().includes(searchText.toLowerCase()) ||
+    contact.contact_email.toLowerCase().includes(searchText.toLowerCase()) ||
+    contact.contact_phone.includes(searchText) ||
+    contact.contact_subject.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const handleExport = (format) => {
-    console.log(`Exporting contact data as ${format}`);
-    // You can implement actual export logic here
-    // For CSV: convert data to CSV format
-    // For SQL: generate INSERT statements
-    // For TXT: format as plain text
-    // For JSON: JSON.stringify(filteredContacts)
+    try {
+      let exportData;
+      switch (format) {
+        case 'CSV':
+          exportData = filteredContacts.map(contact => 
+            `${contact.contact_name},${contact.contact_email},${contact.contact_phone},${contact.contact_subject},${contact.contact_message},${contact.contact_add_date}`
+          ).join('\n');
+          break;
+        case 'JSON':
+          exportData = JSON.stringify(filteredContacts, null, 2);
+          break;
+        case 'TXT':
+          exportData = filteredContacts.map(contact =>
+            `Name: ${contact.contact_name}\nEmail: ${contact.contact_email}\nPhone: ${contact.contact_phone}\nSubject: ${contact.contact_subject}\nMessage: ${contact.contact_message}\nDate: ${contact.contact_add_date}\n-------------------`
+          ).join('\n');
+          break;
+        default:
+          throw new Error('Unsupported export format');
+      }
+      console.log(`Exported ${format} data:`, exportData);
+      Alert.alert('Success', `Data exported as ${format} successfully!`);
+    } catch (error) {
+      console.error(`Error exporting as ${format}:`, error);
+      Alert.alert('Error', `Failed to export data as ${format}`);
+    }
   };
 
   const renderContactRow = ({ item }) => (
-    <View style={styles.tableRow} key={item.id}>
-      <Text style={[styles.tableCell, styles.nameCell]}>{item.name}</Text>
-      <Text style={[styles.tableCell, styles.emailCell]}>{item.email}</Text>
-      <Text style={[styles.tableCell, styles.phoneCell]}>{item.phoneNumber}</Text>
-      <Text style={[styles.tableCell, styles.subjectCell]}>{item.subject}</Text>
-      <Text style={[styles.tableCell, styles.messageCell]} numberOfLines={2}>{item.message}</Text>
-      <Text style={[styles.tableCell, styles.dateCell]}>{item.addDate}</Text>
-      <TouchableOpacity style={styles.actionButton}>
-        <Text style={styles.actionText}>View</Text>
-      </TouchableOpacity>
+    <View style={styles.tableRow} key={item.contact_id}>
+      <Text style={[styles.tableCell, styles.nameCell]}>{item.contact_name}</Text>
+      <Text style={[styles.tableCell, styles.emailCell]}>{item.contact_email}</Text>
+      <Text style={[styles.tableCell, styles.phoneCell]}>{item.contact_phone}</Text>
+      <Text style={[styles.tableCell, styles.subjectCell]}>{item.contact_subject}</Text>
+      <Text style={[styles.tableCell, styles.messageCell]} numberOfLines={2}>{item.contact_message}</Text>
+      <Text style={[styles.tableCell, styles.dateCell]}>{item.contact_add_date}</Text>
     </View>
   );
 
@@ -137,7 +97,6 @@ const AdminContactList = () => {
       <Text style={[styles.headerCell, styles.subjectCell]}>Subject</Text>
       <Text style={[styles.headerCell, styles.messageCell]}>Message</Text>
       <Text style={[styles.headerCell, styles.dateCell]}>Add Date</Text>
-      <Text style={[styles.headerCell, styles.actionCell]}>Action</Text>
     </View>
   );
 
@@ -229,10 +188,6 @@ const AdminContactList = () => {
                 <View style={styles.exportButtonsContainer}>
                   <TouchableOpacity style={[styles.exportButton, styles.csvButton]} onPress={() => handleExport('CSV')}>
                     <Text style={styles.exportButtonText}>Export CSV</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity style={[styles.exportButton, styles.sqlButton]} onPress={() => handleExport('SQL')}>
-                    <Text style={styles.exportButtonText}>Export SQL</Text>
                   </TouchableOpacity>
                   
                   <TouchableOpacity style={[styles.exportButton, styles.txtButton]} onPress={() => handleExport('TXT')}>
@@ -413,23 +368,6 @@ const styles = StyleSheet.create({
     width: 120,
     textAlign: 'center',
   },
-  actionCell: {
-    width: 80,
-    textAlign: 'center',
-  },
-  actionButton: {
-    backgroundColor: '#007bff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
-    width: 60,
-    alignItems: 'center',
-  },
-  actionText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '500',
-  },
   loadingContainer: {
     padding: 40,
     alignItems: 'center',
@@ -477,9 +415,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   csvButton: {
-    backgroundColor: '#22C55E',
-  },
-  sqlButton: {
     backgroundColor: '#22C55E',
   },
   txtButton: {

@@ -84,7 +84,7 @@ const cartReducer = (state = initialState, action) => {
       console.log('Cart Reducer - Handling REMOVE_CART_ITEM');
       return {
         ...state,
-        items: state.items.filter(item => item.p_id !== action.payload),
+        items: state.items.filter(item => item.cart_id !== action.payload),
       };
     case LOGOUT:
       console.log('Cart Reducer - Handling LOGOUT');
