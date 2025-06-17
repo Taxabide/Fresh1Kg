@@ -30,7 +30,11 @@ const AppNavigator = () => {
   const user = useSelector(state => state.user.user);
   return (
     <Stack.Navigator
-      screenOptions={{headerShown: false}}
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: '#ffffff' },
+        animation: 'slide_from_right'
+      }}
       initialRouteName="HomeScreen">
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
       <Stack.Screen name="SignInScreen" component={SignInScreen} />
@@ -39,28 +43,21 @@ const AppNavigator = () => {
         key={user?.u_id || 'default'}
         name="ProfileScreen" 
         component={ProfileScreen} 
-        options={{headerShown:false}}
       />
-      <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{headerShown:false}}/>
-
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="CartMenu" component={CartMenu} />
       <Stack.Screen name="ContactScreen" component={ContactScreen} />
-      <Stack.Screen
-        name="MyOrdersScreen"
-        component={MyOrdersScreen}
-        options={{headerShown: false}}
-      />
-
+      <Stack.Screen name="MyOrdersScreen" component={MyOrdersScreen} />
       <Stack.Screen name="ProductsScreen" component={AllProductsScreen} />
       <Stack.Screen name="SearchResultsScreen" component={SearchResultsScreen} />
       <Stack.Screen name="WishlistScreen" component={WishlistScreen} />
-      <Stack.Screen name="AdminScreen" component={AdminScreen} options={{headerShown:false}}/>
-      <Stack.Screen name="AdminProfileScreen" component={AdminProfileScreen}/>
-      <Stack.Screen name="AdminUserList" component={AdminUserList}/>
-      <Stack.Screen name="AdminContactList" component={AdminContactList}/>
-      <Stack.Screen name="AdminOrderList" component={AdminOrderList}/>
-      <Stack.Screen name="AdminAddProduct" component={AdminAddProduct}/>
-      <Stack.Screen name="AdminProductList" component={AdminProductList}/>
+      <Stack.Screen name="AdminScreen" component={AdminScreen} />
+      <Stack.Screen name="AdminProfileScreen" component={AdminProfileScreen} />
+      <Stack.Screen name="AdminUserList" component={AdminUserList} />
+      <Stack.Screen name="AdminContactList" component={AdminContactList} />
+      <Stack.Screen name="AdminOrderList" component={AdminOrderList} />
+      <Stack.Screen name="AdminAddProduct" component={AdminAddProduct} />
+      <Stack.Screen name="AdminProductList" component={AdminProductList} />
     </Stack.Navigator>
   );
 };

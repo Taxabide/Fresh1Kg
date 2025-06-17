@@ -18,6 +18,8 @@ const AdminProductList = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(6);
   
   // Sample data - Replace with API call
   const sampleProducts = [
@@ -130,6 +132,18 @@ const AdminProductList = () => {
     product.category.toLowerCase().includes(searchText.toLowerCase()) ||
     product.unit.toLowerCase().includes(searchText.toLowerCase())
   );
+
+  // Get current products for pagination
+  const indexOfLastProduct = currentPage * itemsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
 
   const handleExport = (format) => {
     // TODO: Implement export functionality based on format
@@ -266,7 +280,7 @@ const AdminProductList = () => {
                         <Text style={styles.emptyText}>No products found</Text>
                       </View>
                     ) : (
-                      filteredProducts.map((item) => (
+                      currentProducts.map((item) => (
                         <View key={item.id.toString()}>
                           {renderProductRow({ item })}
                         </View>
@@ -278,11 +292,46 @@ const AdminProductList = () => {
             </ScrollView>
           </View>
 
+          {/* Pagination Controls */}
+          {filteredProducts.length > 0 && (
+            <View style={styles.paginationContainer}>
+              <TouchableOpacity 
+                style={[styles.paginationButton, currentPage === 1 && styles.paginationButtonDisabled]} 
+                onPress={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <Text style={[styles.paginationButtonText, currentPage === 1 && styles.paginationButtonTextDisabled]}>Previous</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.pageNumbers}>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                  <TouchableOpacity
+                    key={number}
+                    style={[styles.pageNumberButton, currentPage === number && styles.pageNumberButtonActive]}
+                    onPress={() => paginate(number)}
+                  >
+                    <Text style={[styles.pageNumberText, currentPage === number && styles.pageNumberTextActive]}>
+                      {number}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity 
+                style={[styles.paginationButton, currentPage === totalPages && styles.paginationButtonDisabled]}
+                onPress={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <Text style={[styles.paginationButtonText, currentPage === totalPages && styles.paginationButtonTextDisabled]}>Next</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* Footer section */}
           <View style={styles.bottomSection}>
             <View style={styles.entriesInfo}>
               <Text style={styles.entriesText}>
-                Showing 1 to {Math.min(filteredProducts.length, 6)} of {filteredProducts.length} entries
+                Showing {indexOfFirstProduct + 1} to {Math.min(indexOfLastProduct, filteredProducts.length)} of {filteredProducts.length} entries
               </Text>
             </View>
             
@@ -594,6 +643,59 @@ const styles = StyleSheet.create({
   poweredBy: {
     color: '#28a745',
     fontWeight: '600',
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+    gap: 10,
+  },
+  pageNumbers: {
+    flexDirection: 'row',
+    gap: 5,
+  },
+  paginationButton: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    backgroundColor: '#4CAF50',
+    borderRadius: 5,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  paginationButtonDisabled: {
+    backgroundColor: '#e0e0e0',
+  },
+  paginationButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  paginationButtonTextDisabled: {
+    color: '#999',
+  },
+  pageNumberButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    minWidth: 40,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  pageNumberButtonActive: {
+    backgroundColor: '#4CAF50',
+    borderColor: '#4CAF50',
+  },
+  pageNumberText: {
+    color: '#666',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  pageNumberTextActive: {
+    color: '#fff',
   },
 });
 

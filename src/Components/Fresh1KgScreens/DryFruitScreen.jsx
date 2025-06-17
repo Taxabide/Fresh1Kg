@@ -98,7 +98,7 @@ const DryFruitScreen = () => {
         <Icon 
           name="heart" 
           size={18} 
-          color={addToWishlistLoading ? '#ccc' : '#e74c3c'} 
+          color={addToWishlistLoading ? '#ccc' : '#ffffff'} 
         />
       </TouchableOpacity>
       <Image 
@@ -252,18 +252,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: 15,
     width: 30,
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
   },
   productImage: {
     width: '100%',

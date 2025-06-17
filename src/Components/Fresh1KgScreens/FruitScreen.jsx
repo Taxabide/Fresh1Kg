@@ -10,6 +10,7 @@ import {
   StatusBar,
   ActivityIndicator,
   Alert,
+  ImageBackground,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useSelector, useDispatch } from 'react-redux';
@@ -21,6 +22,29 @@ import { useNavigation } from '@react-navigation/native';
 const FruitScreen = () => {
   const navigation = useNavigation();
   const [quantities, setQuantities] = useState({});
+  const [promoError, setPromoError] = useState(null);
+
+  const PromoCard = ({ title, subtitle, backgroundImage }) => {
+    if (!backgroundImage) {
+      setPromoError('Background image is required for PromoCard');
+      return null;
+    }
+
+    return (
+      <View style={styles.promoCardContainer}>
+        <ImageBackground 
+          source={backgroundImage} 
+          style={styles.promoCard}
+          imageStyle={styles.promoBackgroundImage}
+        >
+          <View style={styles.promoContent}>
+            <Text style={styles.promoTitle}>{title}</Text>
+            <Text style={styles.promoSubtitle}>{subtitle}</Text>
+          </View>
+        </ImageBackground>
+      </View>
+    );
+  };
 
   const dispatch = useDispatch();
   const { products, loading, error } = useSelector(state => state.products);
@@ -84,11 +108,6 @@ const FruitScreen = () => {
     
     return (
       <View key={product.p_id} style={styles.productCard}>
-        <View style={styles.discountBadge}>
-          {/* Discount badge is still dummy, integrate from API if available */}
-          <Text style={styles.discountText}>25%</Text>
-          <Text style={styles.offText}>Off</Text>
-        </View>
         <TouchableOpacity 
           style={styles.wishlistIconContainer}
           onPress={() => addToWishlistHandler(product)}
@@ -97,7 +116,7 @@ const FruitScreen = () => {
           <Icon 
             name="heart" 
             size={18} 
-            color={addToWishlistLoading ? '#ccc' : '#e74c3c'} 
+            color={addToWishlistLoading ? '#ccc' : '#ffffff'} 
           />
         </TouchableOpacity>
         <Image 
@@ -193,17 +212,35 @@ const FruitScreen = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Fresh Fruits</Text>
       </View>
-      {fruitsToDisplay.length > 0 ? (
-        <ScrollView contentContainerStyle={styles.productsGrid} showsVerticalScrollIndicator={false}>
-          {fruitsToDisplay.map((product) => (
-            <ProductCard key={product.p_id} product={product} />
-          ))}
-        </ScrollView>
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.noDataText}>No fruits found.</Text>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <View style={styles.promoSection}>
+          {promoError && (
+            <Text style={styles.errorText}>{promoError}</Text>
+          )}
+          <PromoCard 
+            title="Freshness Guaranteed"
+            subtitle="We deliver handpicked vegetables and fruits, ensuring optimal quality and taste."
+            backgroundImage={require('../../assets/images/dis1.jpg')}
+          />
+          <PromoCard 
+            title="Wide Range of Products"
+            subtitle="From rice, pulses, and oils to exotic fruits and nutritious dry fruits — everything under one roof."
+            backgroundImage={require('../../assets/images/dis2.jpg')}
+          />
         </View>
-      )}
+        
+        {fruitsToDisplay.length > 0 ? (
+          <View style={styles.productsGrid}>
+            {fruitsToDisplay.map((product) => (
+              <ProductCard key={product.p_id} product={product} />
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.noDataText}>No fruits found.</Text>
+          </View>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -212,7 +249,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-    marginTop: -20, // Adjust as needed if SafeAreaView adds unwanted top padding
   },
   header: {
     backgroundColor: '#fff',
@@ -255,16 +291,21 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   productCard: {
-    width: '100%',
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 12,
-    position: 'relative',
+    padding: 15,
+    marginHorizontal: 8,
+    marginBottom: 16,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowRadius: 4,
+    position: 'relative',
+  },
+  promoSection: {
+    padding: 12,
+    gap: 16,
   },
   discountBadge: {
     position: 'absolute',
@@ -291,18 +332,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: 15,
     width: 30,
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
   },
   productImage: {
     width: '100%',
@@ -376,6 +412,43 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginRight: 4,
+  },
+  promoCardContainer: {
+    height: 190,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  promoCard: {
+    flex: 1,
+    justifyContent: 'flex-start',
+  },
+  promoBackgroundImage: {
+    borderRadius: 16,
+    height: '100%',
+    width: '100%',
+  },
+  promoContent: {
+    padding: 20,
+    paddingRight: '45%',
+    height: '100%',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Semi-transparent overlay for text readability
+  },
+  promoTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 6,
+    letterSpacing: 0.2,
+  },
+  promoSubtitle: {
+    fontSize: 14,
+    lineHeight: 18,
+    color: '#ffffff',
+    opacity: 0.95,
+    letterSpacing: 0.1,
+    maxWidth: '95%',
   },
 });
 

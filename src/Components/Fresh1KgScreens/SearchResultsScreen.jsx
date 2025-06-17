@@ -7,19 +7,21 @@ import {
   ActivityIndicator,
   Image,
   Dimensions,
-  SafeAreaView,
   TouchableOpacity,
-  Alert
+  Alert,
+  StatusBar,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { addToWishlist } from '../../redux/actions/wishlistActions';
 import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
 const SearchResultsScreen = ({ route }) => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { query } = route.params;
   const { products: productsState, loading, error } = useSelector(state => state.products);
   const user = useSelector(state => state.user.user);
@@ -71,7 +73,7 @@ const SearchResultsScreen = ({ route }) => {
         <MaterialIcons 
           name="favorite" 
           size={20} 
-          color={addToWishlistLoading ? '#ccc' : '#e74c3c'} 
+          color={addToWishlistLoading ? '#ccc' : '#ffffff'} 
         />
       </TouchableOpacity>
       <Image source={{ uri: imageUrl }} style={styles.productImage} onError={(e) => { /* */ }} />
@@ -89,9 +91,19 @@ const SearchResultsScreen = ({ route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#ffffff"
+        translucent={true}
+      />
+      
+      <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
+        <View style={[styles.header, { marginTop: insets.top }]}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
           <MaterialIcons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Search Results for "{query}"</Text>
@@ -115,28 +127,35 @@ const SearchResultsScreen = ({ route }) => {
         </View>
       )}
     </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#ffffff',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
   backButton: {
-    marginRight: 16,
+    padding: 4,
+    marginRight: 12,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '500',
     color: '#333',
     flex: 1,
   },
@@ -218,18 +237,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: 18,
     width: 36,
     height: 36,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
   },
 });
 

@@ -14,7 +14,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateCartItemQuantity, removeCartItem, fetchCart } from '../../redux/actions/cartActions';
 
-const CartMenu = () => {
+const CartMenu = ({ navigation }) => {
   const dispatch = useDispatch();
   const cartItems = useSelector(state => state.cart.items);
   const user = useSelector(state => state.user.user);
@@ -135,7 +135,7 @@ const CartMenu = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => { /* Implement back navigation */ }}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="#2874f0" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Cart ({String(cartItems.length)})</Text>

@@ -20,6 +20,8 @@ const AdminUserList = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(6);
   
   // Sample data - Replace with API call
   const sampleUsers = [
@@ -114,6 +116,18 @@ const AdminUserList = () => {
     user.email.toLowerCase().includes(searchText.toLowerCase()) ||
     user.number.includes(searchText)
   );
+
+  // Get current users for pagination
+  const indexOfLastUser = currentPage * itemsPerPage;
+  const indexOfFirstUser = indexOfLastUser - itemsPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
 
   const handleExport = (format) => {
     // TODO: Implement export functionality based on format
@@ -229,7 +243,7 @@ const AdminUserList = () => {
                           <Text style={styles.emptyText}>No users found</Text>
                         </View>
                       ) : (
-                        filteredUsers.map((item) => (
+                        currentUsers.map((item) => (
                           <View key={item.id.toString()}>
                             {renderUserRow({ item })}
                           </View>
@@ -240,11 +254,46 @@ const AdminUserList = () => {
                 </View>
               </ScrollView>
 
+              {/* Pagination Controls */}
+              {filteredUsers.length > 0 && (
+                <View style={styles.paginationContainer}>
+                  <TouchableOpacity 
+                    style={[styles.paginationButton, currentPage === 1 && styles.paginationButtonDisabled]} 
+                    onPress={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <Text style={[styles.paginationButtonText, currentPage === 1 && styles.paginationButtonTextDisabled]}>Previous</Text>
+                  </TouchableOpacity>
+                  
+                  <View style={styles.pageNumbers}>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                      <TouchableOpacity
+                        key={number}
+                        style={[styles.pageNumberButton, currentPage === number && styles.pageNumberButtonActive]}
+                        onPress={() => paginate(number)}
+                      >
+                        <Text style={[styles.pageNumberText, currentPage === number && styles.pageNumberTextActive]}>
+                          {number}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <TouchableOpacity 
+                    style={[styles.paginationButton, currentPage === totalPages && styles.paginationButtonDisabled]}
+                    onPress={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    <Text style={[styles.paginationButtonText, currentPage === totalPages && styles.paginationButtonTextDisabled]}>Next</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
               {/* Footer section */}
               <View style={styles.bottomSection}>
                 <View style={styles.entriesInfo}>
                   <Text style={styles.entriesText}>
-                    Showing 1 to {Math.min(filteredUsers.length, 6)} of {filteredUsers.length} entries
+                    Showing {indexOfFirstUser + 1} to {Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} entries
                   </Text>
                 </View>
                 
@@ -305,7 +354,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     padding: 16,
-    paddingTop: 70, // Adjust this based on your navbar height
+    paddingTop: 120, // Increased padding top even more
   },
   fullScreenScroll: {
     flex: 1,
@@ -561,6 +610,59 @@ const styles = StyleSheet.create({
   poweredBy: {
     color: '#28a745',
     fontWeight: '600',
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+    gap: 10,
+  },
+  pageNumbers: {
+    flexDirection: 'row',
+    gap: 5,
+  },
+  paginationButton: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    backgroundColor: '#4CAF50',
+    borderRadius: 5,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  paginationButtonDisabled: {
+    backgroundColor: '#e0e0e0',
+  },
+  paginationButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  paginationButtonTextDisabled: {
+    color: '#999',
+  },
+  pageNumberButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    minWidth: 40,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  pageNumberButtonActive: {
+    backgroundColor: '#4CAF50',
+    borderColor: '#4CAF50',
+  },
+  pageNumberText: {
+    color: '#666',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  pageNumberTextActive: {
+    color: '#fff',
   },
 });
 

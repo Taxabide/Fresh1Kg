@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -17,11 +17,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import CartMenu from '../../Components/Navbar/CartMenu.jsx';
+import CartMenu from './CartMenu.jsx';
 import { useSelector, useDispatch } from 'react-redux';
 import { searchProducts } from '../../redux/actions/productActions';
 import { fetchWishlist } from '../../redux/actions/wishlistActions';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { fetchCart } from '../../redux/actions/cartActions';
 
 
 const { width, height } = Dimensions.get('window');
@@ -36,10 +37,17 @@ const Navbar = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState({});
 
-  // Get user login status from Redux store
+  // Get user login status and cart items from Redux store
   const isLoggedIn = useSelector(state => state.user.isLoggedIn);
   const userId = useSelector(state => state.user.user ? state.user.user.u_id : null);
   const wishlistItems = useSelector(state => state.wishlistData.items);
+  const cartItems = useSelector(state => state.cart.items);
+
+  useEffect(() => {
+    if (isLoggedIn && userId) {
+      dispatch(fetchCart(userId));
+    }
+  }, [isLoggedIn, userId]);
 
   // Get dynamic dimensions for responsive design
   const screenData = Dimensions.get('window');
@@ -107,6 +115,7 @@ const handleMenuItemPress = (item) => {
           title: 'About Us' 
         });
         break;
+        
       case 'Vegetables':
         navigation.navigate('ProductsScreen', {
           categoryId: 2,
@@ -133,6 +142,9 @@ const handleMenuItemPress = (item) => {
         break;
       case 'Contact Us':
         navigation.navigate('ContactScreen');
+        break;
+      case 'Wishlist':
+        navigation.navigate('WishlistScreen');
         break;
       default:
         Alert.alert(
@@ -317,6 +329,36 @@ const handleMenuItemPress = (item) => {
           >
             <Text style={styles.menuItemText}>Contact Us</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => handleMenuItemPress('Wishlist')}
+          >
+            <Text style={styles.menuItemText}>Wishlist</Text>
+          </TouchableOpacity>
+
+          <View style={[styles.bottomSection, { marginTop: 10 }]}>
+            <View style={styles.contactInfo}>
+              <View style={styles.contactRow}>
+                <MaterialIcons name="headset-mic" size={16} color="#7CB342" />
+                <Text style={[
+                  styles.contactText,
+                  { fontSize: isSmallScreen ? 12 : 14 }
+                ]}>
+                  02345697871
+                </Text>
+              </View>
+              <View style={styles.contactRow}>
+                <MaterialIcons name="email" size={16} color="#7CB342" />
+                <Text style={[
+                  styles.contactText,
+                  { fontSize: isSmallScreen ? 12 : 14 }
+                ]}>
+                  info@example.com
+                </Text>
+              </View>
+            </View>
+          </View>
         </ScrollView>
       );
     } else {
@@ -397,98 +439,81 @@ const handleMenuItemPress = (item) => {
   };
 
   return (
-    <>
-      {/* StatusBar - positioned at the very top */}
-      <StatusBar 
-        barStyle="dark-content" 
-        backgroundColor="#ffffff"
-        translucent={false}
-      />
-      
-      {/* Main Navbar Container - positioned right after status bar */}
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.navbarContainer}>
-          <View style={styles.navbar}>
-            {/* Logo Section */}
-            <View style={styles.logoContainer}>
-              <Image 
-                source={require('../../assets/images/logo.png')}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </View>
-
-            {/* Right Icons Section */}
-            <View style={styles.iconsContainer}>
-              <TouchableOpacity 
-                style={styles.iconButton}
-                onPress={() => {
-                  if (isLoggedIn) {
-                    navigation.navigate('ProfileScreen');
-                  } else {
-                    navigation.navigate('SignInScreen');
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons 
-                  name="person" 
-                  size={24} 
-                  color={isLoggedIn ? "#7CB342" : "#333"}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={handleWishlistPress}
-                activeOpacity={0.7}
-              >
-                <FontAwesome
-                  name="heart"
-                  size={isSmallScreen ? 22 : isTablet ? 32 : 28}
-                  color="#333"
-                />
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.iconButton}
-                onPress={handleCartPress}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons 
-                  name="shopping-cart" 
-                  size={isSmallScreen ? 22 : isTablet ? 32 : 28} 
-                  color="#333" 
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.iconButton}
-                onPress={handleSearchPress}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons 
-                  name="search" 
-                  size={isSmallScreen ? 22 : isTablet ? 32 : 28} 
-                  color="#333" 
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.iconButton}
-                onPress={handleMenuPress}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons 
-                  name="menu" 
-                  size={isSmallScreen ? 22 : isTablet ? 32 : 28} 
-                  color="#333" 
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
+    <View style={styles.navbarContainer}>
+      <View style={styles.navbar}>
+        {/* Logo Section */}
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('../../assets/images/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
-      </SafeAreaView>
+
+        {/* Right Icons Section */}
+        <View style={styles.iconsContainer}>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={() => {
+              if (isLoggedIn) {
+                navigation.navigate('ProfileScreen');
+              } else {
+                navigation.navigate('SignInScreen');
+              }
+            }}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons 
+              name="person" 
+              size={24}
+              color={isLoggedIn ? "#7CB342" : "#333"}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={handleCartPress}
+            activeOpacity={0.7}
+          >
+            <View>
+              <MaterialIcons 
+                name="shopping-cart-checkout" 
+                size={24}
+                color="#000" 
+              />
+              {cartItems && cartItems.length > 0 && (
+                <View style={styles.cartBadge}>
+                  <Text style={styles.cartBadgeText}>{cartItems.length}</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={handleSearchPress}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons 
+              name="search" 
+              size={24}
+              color="#333" 
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={handleMenuPress}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons 
+              name="menu" 
+              size={24}
+              color="#333" 
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {/* Search Modal */}
       <Modal
@@ -614,99 +639,52 @@ const handleMenuItemPress = (item) => {
             <View style={styles.contentContainer}>
               {renderMenuContent()}
             </View>
-
-            <View style={styles.bottomSection}>
-              <View style={styles.contactInfo}>
-                <View style={styles.contactRow}>
-                  <MaterialIcons name="headset-mic" size={16} color="#7CB342" />
-                  <Text style={[
-                    styles.contactText,
-                    { fontSize: isSmallScreen ? 12 : 14 }
-                  ]}>
-                    02345697871
-                  </Text>
-                </View>
-                <View style={styles.contactRow}>
-                  <MaterialIcons name="email" size={16} color="#7CB342" />
-                  <Text style={[
-                    styles.contactText,
-                    { fontSize: isSmallScreen ? 12 : 14 }
-                  ]}>
-                    info@example.com
-                  </Text>
-                </View>
-              </View>
-            </View>
           </Animated.View>
         </View>
       </Modal>
-    </>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  // Fixed SafeAreaView for proper positioning
-  safeArea: {
-    backgroundColor: '#ffffff',
-  },
-  // Clean navbar container - no extra padding
   navbarContainer: {
     backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: {
-          width: 0,
-          height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3.84,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
   },
-navbar: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  paddingHorizontal: width < 375 ? 16 : 22, // 14→16, 18→22
-  paddingVertical: width < 375 ? 12 : 15,   // 10→12, 12→15
-  backgroundColor: '#ffffff',
-  height: width < 375 ? 70 : width >= 768 ? 80 : 75, // 60→70, 65→75, 70→80
-},
+  navbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#ffffff',
+    height: 56,
+  },
   logoContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'flex-start',
+    width: '25%',
   },
-logo: {
-  width: width < 375 ? 80 : width >= 768 ? 120 : 100,   // 80→100→120
-  height: width < 375 ? 64 : width >= 768 ? 96 : 80,    // 64→80→96
-},
+  logo: {
+    width: width < 375 ? 80 : width >= 768 ? 120 : 100,
+    height: width < 375 ? 64 : width >= 768 ? 96 : 80,
+  },
   iconsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
+    flex: 1,
+    gap: 20,
   },
   iconButton: {
-  padding: width < 375 ? 10 : 12,                    // 8→10, 10→12
-  marginLeft: width < 375 ? 10 : 12,                 // 6→10, 8→12
-  borderRadius: 20,
-  backgroundColor: 'rgba(0,0,0,0.05)',
-  minWidth: width < 375 ? 44 : 48,                   // 40→44, 44→48
-  minHeight: width < 375 ? 44 : 48,                  // 40→44, 44→48
-  justifyContent: 'center',
-  alignItems: 'center',
-},
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 40,
+    height: 40,
+  },
   overlayTouchable: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  // Search Modal Styles
   searchModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.8)',
@@ -760,7 +738,6 @@ logo: {
     borderTopRightRadius: 4,
     borderBottomRightRadius: 4,
   },
-  // Modal Overlay
   modalOverlay: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -818,7 +795,6 @@ logo: {
     top: 12,
   },
   searchIcon: {
-    // No position or offset needed here, as it's handled by searchIconContainer
   },
   tabContainer: {
     flexDirection: 'row',
@@ -926,6 +902,23 @@ logo: {
   subcategoryText: {
     color: '#666',
     flex: 1,
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: '#ff6f00',
+    borderRadius: 8,
+    minWidth: 14,
+    height: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 2,
+  },
+  cartBadgeText: {
+    color: '#fff',
+    fontSize: 8,
+    fontWeight: 'bold',
   },
 });
 
