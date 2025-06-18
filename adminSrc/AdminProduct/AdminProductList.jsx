@@ -78,6 +78,7 @@ const AdminProductList = () => {
   // Add this effect to log product data when it's loaded
   useEffect(() => {
     if (products && products.length > 0) {
+      
       console.log('Sample product data:', {
         firstProduct: products[0],
         imagePath: products[0].p_image,
