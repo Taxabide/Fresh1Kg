@@ -5,61 +5,16 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
-<<<<<<< HEAD
-} from 'react-native';
-=======
   TouchableOpacity,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 
->>>>>>> 4f54af9 (Initial commit)
 // Import your icon libraries
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 const PolicyScreen = () => {
-<<<<<<< HEAD
-  const policies = [
-    {
-      id: 1,
-      iconName: 'widgets',
-      iconType: 'MaterialIcons',
-      title: 'Wide Assortment',
-      subtitle: 'Huge Variety, Great Selection',
-      backgroundColor: '#E8F5E8',
-      iconColor: '#4CAF50',
-    },
-    {
-      id: 2,
-      iconName: 'refresh-cw',
-      iconType: 'Feather',
-      title: 'Easy Return Policy',
-      subtitle: 'Easy Returns, No Worries',
-      backgroundColor: '#E8F5E8',
-      iconColor: '#4CAF50',
-    },
-    {
-      id: 3,
-      iconName: 'dollar-sign',
-      iconType: 'Feather',
-      title: 'Best Prices & Offers',
-      subtitle: 'Exclusive Deals, Best Rates',
-      backgroundColor: '#E8F5E8',
-      iconColor: '#4CAF50',
-    },
-    {
-      id: 4,
-      iconName: 'headphones',
-      iconType: 'FontAwesome',
-      title: 'Support 24/7',
-      subtitle: 'Nonstop Help, Always On',
-      backgroundColor: '#E8F5E8',
-      iconColor: '#4CAF50',
-    },
-  ];
-
-=======
   const navigation = useNavigation();
 
   const policies = [
@@ -102,7 +57,6 @@ const PolicyScreen = () => {
     });
   };
 
->>>>>>> 4f54af9 (Initial commit)
   const renderIcon = (iconName, iconType, color, size = 24) => {
     const IconComponent = {
       MaterialIcons: MaterialIcons,
@@ -127,16 +81,12 @@ const PolicyScreen = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {policies.map((policy) => (
-<<<<<<< HEAD
-          <View key={policy.id} style={styles.policyItem}>
-=======
           <TouchableOpacity
             key={policy.id}
             style={styles.policyItem}
             onPress={() => handlePolicyPress(policy)}
             activeOpacity={0.7}
           >
->>>>>>> 4f54af9 (Initial commit)
             <View style={[styles.iconContainer, { backgroundColor: policy.backgroundColor }]}>
               {renderIcon(policy.iconName, policy.iconType, policy.iconColor, 24)}
             </View>
@@ -144,9 +94,6 @@ const PolicyScreen = () => {
               <Text style={styles.title}>{policy.title}</Text>
               <Text style={styles.subtitle}>{policy.subtitle}</Text>
             </View>
-<<<<<<< HEAD
-          </View>
-=======
             {/* Optional: Add arrow icon to indicate it's clickable */}
             <MaterialIcons 
               name="chevron-right" 
@@ -154,7 +101,6 @@ const PolicyScreen = () => {
               color="#CCCCCC" 
             />
           </TouchableOpacity>
->>>>>>> 4f54af9 (Initial commit)
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -165,11 +111,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
-<<<<<<< HEAD
-    marginTop:-15,
-=======
     marginTop: -15,
->>>>>>> 4f54af9 (Initial commit)
   },
   scrollContainer: {
     padding: 16,

@@ -63,14 +63,10 @@ const VegetablesScreen = () => {
   // Limit to 6 items
   const vegetablesToDisplay = Array.isArray(products['2']) ? products['2'].slice(0, 6) : [];
 
-<<<<<<< HEAD
-  const scrollAmount = 220; // width of item + marginRight
-=======
   // Calculate proper scroll amount based on item width + margin
   const itemWidth = width * 0.55; // 55% of screen width
   const itemMargin = 15;
   const scrollAmount = itemWidth + itemMargin;
->>>>>>> 4f54af9 (Initial commit)
 
   const updateQuantity = (itemId, operation) => {
     setQuantities((prev) => {
@@ -116,11 +112,7 @@ const VegetablesScreen = () => {
     }
   };
 
-<<<<<<< HEAD
-  const renderGroceryItem = (item) => (
-=======
   const renderGroceryItem = (item, index) => (
->>>>>>> 4f54af9 (Initial commit)
     <View key={item.p_id} style={styles.itemContainer}>
       <View style={styles.imageContainer}>
         {/* Wishlist Icon */}
@@ -146,11 +138,7 @@ const VegetablesScreen = () => {
         <Text style={styles.productName} numberOfLines={2}>
           {String(item.p_name)}
         </Text>
-<<<<<<< HEAD
-        <Text style={styles.productWeight}>Weight: {String(item.p_weight)} {String(item.p_unit)}</Text>
-=======
         <Text style={styles.productWeight}>Weight: {String(item.formatted_weight)} </Text>
->>>>>>> 4f54af9 (Initial commit)
 
         <View style={styles.priceContainer}>
           <Text style={styles.currentPrice}>₹{String(item.p_price)}</Text>
@@ -205,14 +193,11 @@ const VegetablesScreen = () => {
     if (scrollRef.current) {
       let newX = direction === 'right' ? scrollX + scrollAmount : scrollX - scrollAmount;
       newX = Math.max(0, newX);
-<<<<<<< HEAD
-=======
       
       // Calculate max scroll position to prevent over-scrolling
       const maxScrollX = Math.max(0, (vegetablesToDisplay.length * scrollAmount) - width + 40);
       newX = Math.min(newX, maxScrollX);
       
->>>>>>> 4f54af9 (Initial commit)
       scrollRef.current.scrollTo({ x: newX, animated: true });
       setScrollX(newX);
     }
@@ -237,18 +222,6 @@ const VegetablesScreen = () => {
       ) : error ? (
         <Text style={styles.errorText}>Error: {String(error)}</Text>
       ) : vegetablesToDisplay.length > 0 ? (
-<<<<<<< HEAD
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContainer}
-          onScroll={onScroll}
-          scrollEventThrottle={16}
-        >
-          {vegetablesToDisplay.map(renderGroceryItem)}
-        </ScrollView>
-=======
         <View style={styles.scrollViewContainer}>
           <ScrollView
             ref={scrollRef}
@@ -265,7 +238,6 @@ const VegetablesScreen = () => {
             {vegetablesToDisplay.map((item, index) => renderGroceryItem(item, index))}
           </ScrollView>
         </View>
->>>>>>> 4f54af9 (Initial commit)
       ) : (
         <Text style={styles.noDataText}>No vegetables found.</Text>
       )}
@@ -276,18 +248,11 @@ const VegetablesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-<<<<<<< HEAD
-    backgroundColor: '#f8f9fa',
-    paddingVertical: 15,
-    paddingBottom: 25,
-    minHeight: 400,
-=======
     backgroundColor: '#ffffff', // Changed to white for seamless look
     paddingVertical: 15,
     paddingBottom: 25,
     minHeight: 400,
     overflow: 'hidden', // Prevent content from going outside container
->>>>>>> 4f54af9 (Initial commit)
   },
   header: {
     flexDirection: 'row',
@@ -323,37 +288,14 @@ const styles = StyleSheet.create({
     color: '#666',
     fontWeight: 'bold',
   },
-<<<<<<< HEAD
-=======
   scrollViewContainer: {
     flex: 1,
     overflow: 'hidden', // Ensure ScrollView content stays within bounds
   },
->>>>>>> 4f54af9 (Initial commit)
   scrollContainer: {
     paddingLeft: 20,
     paddingRight: 20,
     paddingBottom: 15,
-<<<<<<< HEAD
-  },
-  itemContainer: {
-    width: 210,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginRight: 20,
-    marginBottom: 10,
-    paddingBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  imageContainer: {
-    position: 'relative',
-    height: 140,
-    backgroundColor: '#f8f9fa',
-=======
     alignItems: 'flex-start', // Align items to prevent vertical overflow
   },
   itemContainer: {
@@ -376,15 +318,11 @@ const styles = StyleSheet.create({
     position: 'relative',
     height: 120,
     backgroundColor: '#ffffff', // Pure white background
->>>>>>> 4f54af9 (Initial commit)
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-<<<<<<< HEAD
-=======
     overflow: 'hidden',
->>>>>>> 4f54af9 (Initial commit)
   },
   wishlistIconContainer: {
     position: 'absolute',
@@ -420,26 +358,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   productImage: {
-<<<<<<< HEAD
-    width: 100,
-    height: 100,
-    resizeMode: 'contain',
-  },
-  productInfo: {
-    padding: 15,
-  },
-  productName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  productWeight: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 12,
-=======
     width: '90%', // Reduced width to ensure it fits
     height: 120,
     marginBottom: 0,
@@ -460,33 +378,20 @@ const styles = StyleSheet.create({
     fontSize: 11, // Smaller font
     color: '#666',
     marginBottom: 8,
->>>>>>> 4f54af9 (Initial commit)
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-<<<<<<< HEAD
-    marginBottom: 15,
-    gap: 8,
-  },
-  currentPrice: {
-    fontSize: 16,
-=======
     marginBottom: 12,
     gap: 6,
   },
   currentPrice: {
     fontSize: 15, // Slightly smaller
->>>>>>> 4f54af9 (Initial commit)
     fontWeight: 'bold',
     color: '#e74c3c',
   },
   originalPrice: {
-<<<<<<< HEAD
-    fontSize: 12,
-=======
     fontSize: 11,
->>>>>>> 4f54af9 (Initial commit)
     color: '#999',
     textDecorationLine: 'line-through',
   },
@@ -494,11 +399,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-<<<<<<< HEAD
-    gap: 10,
-=======
     gap: 8,
->>>>>>> 4f54af9 (Initial commit)
   },
   quantitySelector: {
     flexDirection: 'row',
@@ -506,45 +407,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 6,
-<<<<<<< HEAD
-  },
-  quantityButton: {
-    width: 32,
-    height: 32,
-=======
     flex: 1,
     maxWidth: 90, // Limit width
   },
   quantityButton: {
     width: 28, // Smaller buttons
     height: 28,
->>>>>>> 4f54af9 (Initial commit)
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
   },
   quantityButtonText: {
-<<<<<<< HEAD
-    fontSize: 16,
-=======
     fontSize: 14,
->>>>>>> 4f54af9 (Initial commit)
     fontWeight: 'bold',
     color: '#333',
   },
   quantityText: {
-<<<<<<< HEAD
-    paddingHorizontal: 12,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  addButton: {
-    backgroundColor: '#28a745',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-=======
     paddingHorizontal: 8,
     fontSize: 13,
     fontWeight: '600',
@@ -560,22 +438,15 @@ const styles = StyleSheet.create({
     flex: 1,
     maxWidth: 70, // Limit button width
     alignItems: 'center',
->>>>>>> 4f54af9 (Initial commit)
   },
   addButtonDisabled: {
     backgroundColor: '#ccc',
   },
   addButtonText: {
     color: '#fff',
-<<<<<<< HEAD
-    fontSize: 12,
-    fontWeight: '600',
-    marginRight: 4,
-=======
     fontSize: 11,
     fontWeight: '600',
     marginRight: 2,
->>>>>>> 4f54af9 (Initial commit)
   },
   loadingIndicator: {
     marginTop: 20,

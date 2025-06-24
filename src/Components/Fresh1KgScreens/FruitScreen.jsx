@@ -132,11 +132,7 @@ const FruitScreen = () => {
             {product.p_name || 'Product Name Not Available'}
           </Text>
           <Text style={styles.productSize}>
-<<<<<<< HEAD
-            {product.p_weight || ''} {product.p_unit || ''}
-=======
             Weight: {product.formatted_weight || ''}
->>>>>>> 4f54af9 (Initial commit)
           </Text>
           <View style={styles.priceContainer}>
             <Text style={styles.price}>
