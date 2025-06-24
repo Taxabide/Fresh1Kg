@@ -5,13 +5,21 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
+<<<<<<< HEAD
 } from 'react-native';
+=======
+  TouchableOpacity,
+} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+
+>>>>>>> 4f54af9 (Initial commit)
 // Import your icon libraries
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 const PolicyScreen = () => {
+<<<<<<< HEAD
   const policies = [
     {
       id: 1,
@@ -51,6 +59,50 @@ const PolicyScreen = () => {
     },
   ];
 
+=======
+  const navigation = useNavigation();
+
+  const policies = [
+    {
+      id: 1,
+      iconName: 'eco', // Leaf icon for vegetables
+      iconType: 'MaterialIcons',
+      title: 'Vegetables',
+      subtitle: 'Fresh & Organic, Farm to Table',
+      backgroundColor: '#E8F5E8',
+      iconColor: '#4CAF50',
+      categoryId: 2, // Replace with your actual categoryId number for vegetables
+    },
+    {
+      id: 2,
+      iconName: 'apple', // Apple icon for fruits
+      iconType: 'FontAwesome',
+      title: 'Fruits',
+      subtitle: 'Sweet & Juicy, Premium Quality',
+      backgroundColor: '#FFF3E0',
+      iconColor: '#FF9800',
+      categoryId: 1, // Replace with your actual categoryId number for fruits
+    },
+    {
+      id: 3,
+      iconName: 'local-florist', // Flower/natural icon for dry fruits
+      iconType: 'MaterialIcons',
+      title: 'Dry-Fruits',
+      subtitle: 'Premium Nuts, Rich in Nutrition',
+      backgroundColor: '#F3E5F5',
+      iconColor: '#9C27B0',
+      categoryId: 3, // Replace with your actual categoryId number for dry-fruits
+    },
+  ];
+
+  const handlePolicyPress = (policy) => {
+    navigation.navigate('ProductsScreen', {
+      categoryId: policy.categoryId,
+      title: policy.title,
+    });
+  };
+
+>>>>>>> 4f54af9 (Initial commit)
   const renderIcon = (iconName, iconType, color, size = 24) => {
     const IconComponent = {
       MaterialIcons: MaterialIcons,
@@ -75,7 +127,16 @@ const PolicyScreen = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {policies.map((policy) => (
+<<<<<<< HEAD
           <View key={policy.id} style={styles.policyItem}>
+=======
+          <TouchableOpacity
+            key={policy.id}
+            style={styles.policyItem}
+            onPress={() => handlePolicyPress(policy)}
+            activeOpacity={0.7}
+          >
+>>>>>>> 4f54af9 (Initial commit)
             <View style={[styles.iconContainer, { backgroundColor: policy.backgroundColor }]}>
               {renderIcon(policy.iconName, policy.iconType, policy.iconColor, 24)}
             </View>
@@ -83,7 +144,17 @@ const PolicyScreen = () => {
               <Text style={styles.title}>{policy.title}</Text>
               <Text style={styles.subtitle}>{policy.subtitle}</Text>
             </View>
+<<<<<<< HEAD
           </View>
+=======
+            {/* Optional: Add arrow icon to indicate it's clickable */}
+            <MaterialIcons 
+              name="chevron-right" 
+              size={24} 
+              color="#CCCCCC" 
+            />
+          </TouchableOpacity>
+>>>>>>> 4f54af9 (Initial commit)
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -94,7 +165,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
+<<<<<<< HEAD
     marginTop:-15,
+=======
+    marginTop: -15,
+>>>>>>> 4f54af9 (Initial commit)
   },
   scrollContainer: {
     padding: 16,

@@ -18,6 +18,10 @@ const VegetableItems = () => {
 
   const originalCategories = [
     {
+<<<<<<< HEAD
+=======
+      
+>>>>>>> 4f54af9 (Initial commit)
       id: 1,
       title: 'Root\nVegetables',
       image: require('../../assets/images/root.png'),

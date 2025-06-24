@@ -110,7 +110,11 @@ const DryFruitScreen = () => {
       />
       <View style={styles.productInfo}>
         <Text style={styles.productName} numberOfLines={2}>{String(item.p_name)}</Text>
+<<<<<<< HEAD
         <Text style={styles.productWeight}>{String(item.p_weight)} {String(item.p_unit)}</Text>
+=======
+        <Text style={styles.productWeight}>Weight: {String(item.formatted_weight)} </Text>
+>>>>>>> 4f54af9 (Initial commit)
         <View style={styles.priceContainer}>
           <Text style={styles.currentPrice}>₹{String(item.p_price)}</Text>
           {item.original_price && <Text style={styles.originalPrice}>₹{String(item.original_price)}</Text>}
@@ -262,10 +266,15 @@ const styles = StyleSheet.create({
   },
   productImage: {
     width: '100%',
+<<<<<<< HEAD
     height: 110,
     borderRadius: 8,
     marginBottom: 10,
     resizeMode: 'contain',
+=======
+    height: 150,
+    marginBottom: 8,
+>>>>>>> 4f54af9 (Initial commit)
   },
   productInfo: {
     flex: 1,
@@ -282,13 +291,23 @@ const styles = StyleSheet.create({
   productWeight: {
     fontSize: 12,
     color: '#888',
+<<<<<<< HEAD
     marginBottom: 8,
+=======
+    marginBottom: 4,
+    
+>>>>>>> 4f54af9 (Initial commit)
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+<<<<<<< HEAD
     marginBottom: 12,
     marginTop: 8,
+=======
+    marginBottom: 10,
+    
+>>>>>>> 4f54af9 (Initial commit)
   },
   currentPrice: {
     fontSize: 16,

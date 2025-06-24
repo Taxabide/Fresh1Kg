@@ -26,7 +26,10 @@ const AddProduct = () => {
     productDescription: '',
     productImageName: '',
   });
+<<<<<<< HEAD
   //helo
+=======
+>>>>>>> 4f54af9 (Initial commit)
 
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showRateDropdown, setShowRateDropdown] = useState(false);

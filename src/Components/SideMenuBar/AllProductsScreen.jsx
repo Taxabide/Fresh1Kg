@@ -96,17 +96,27 @@ const ProductsScreen = ({route}) => {
             </View>
             <View style={styles.productDetails}>
               <Text style={styles.productName}>{String(product.p_name)}</Text>
+<<<<<<< HEAD
               <View style={styles.priceRow}>
                 {product.original_price && <Text style={styles.originalPrice}>₹{String(product.original_price)}</Text>}
                 <Text style={styles.perKg}>₹{String(product.p_price)}</Text>
               </View>
               <Text style={styles.weight}>
                 Weight - {String(product.p_weight)} {String(product.p_unit)}
+=======
+             
+              <Text style={styles.weight}>
+                Weight - {String(product.formatted_weight)}
+>>>>>>> 4f54af9 (Initial commit)
               </Text>
               <View style={styles.actualPriceRow}>
                 <Text style={styles.actualPriceLabel}>Price - </Text>
                 <Text style={styles.actualPrice}>
+<<<<<<< HEAD
                   ₹{String(product.p_price)}
+=======
+                  ₹{String(product.actual_price_per_kg)}
+>>>>>>> 4f54af9 (Initial commit)
                 </Text>
               </View>
               <TouchableOpacity 
