@@ -46,6 +46,18 @@ const AdminUserList = () => {
     user.u_number.includes(searchText)
   );
 
+  // Get current users for pagination
+  const indexOfLastUser = currentPage * itemsPerPage;
+  const indexOfFirstUser = indexOfLastUser - itemsPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
   const handleExport = (format) => {
     // TODO: Implement export functionality based on format
     console.log(`Exporting data as ${format}`);
@@ -170,6 +182,41 @@ const AdminUserList = () => {
                 </View>
               </ScrollView>
 
+              {/* Pagination Controls */}
+              {filteredUsers.length > 0 && (
+                <View style={styles.paginationContainer}>
+                  <TouchableOpacity 
+                    style={[styles.paginationButton, currentPage === 1 && styles.paginationButtonDisabled]} 
+                    onPress={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <Text style={[styles.paginationButtonText, currentPage === 1 && styles.paginationButtonTextDisabled]}>Previous</Text>
+                  </TouchableOpacity>
+                  
+                  <View style={styles.pageNumbers}>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                      <TouchableOpacity
+                        key={number}
+                        style={[styles.pageNumberButton, currentPage === number && styles.pageNumberButtonActive]}
+                        onPress={() => paginate(number)}
+                      >
+                        <Text style={[styles.pageNumberText, currentPage === number && styles.pageNumberTextActive]}>
+                          {number}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <TouchableOpacity 
+                    style={[styles.paginationButton, currentPage === totalPages && styles.paginationButtonDisabled]}
+                    onPress={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    <Text style={[styles.paginationButtonText, currentPage === totalPages && styles.paginationButtonTextDisabled]}>Next</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
               {/* Footer section */}
               <View style={styles.bottomSection}>
                 <View style={styles.entriesInfo}>
@@ -235,7 +282,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     padding: 16,
-    paddingTop: 70, // Adjust this based on your navbar height
+    paddingTop: 120, // Increased padding top even more
   },
   fullScreenScroll: {
     flex: 1,

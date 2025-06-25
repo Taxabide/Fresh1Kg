@@ -63,7 +63,10 @@ const VegetablesScreen = () => {
   // Limit to 6 items
   const vegetablesToDisplay = Array.isArray(products['2']) ? products['2'].slice(0, 6) : [];
 
-  const scrollAmount = 220; // width of item + marginRight
+  // Calculate proper scroll amount based on item width + margin
+  const itemWidth = width * 0.55; // 55% of screen width
+  const itemMargin = 15;
+  const scrollAmount = itemWidth + itemMargin;
 
   const updateQuantity = (itemId, operation) => {
     setQuantities((prev) => {
@@ -109,7 +112,7 @@ const VegetablesScreen = () => {
     }
   };
 
-  const renderGroceryItem = (item) => (
+  const renderGroceryItem = (item, index) => (
     <View key={item.p_id} style={styles.itemContainer}>
       <View style={styles.imageContainer}>
         {/* Wishlist Icon */}
@@ -121,7 +124,7 @@ const VegetablesScreen = () => {
           <Icon 
             name="heart" 
             size={18} 
-            color={addToWishlistLoading ? '#ccc' : '#e74c3c'} 
+            color={addToWishlistLoading ? '#ccc' : '#ffffff'} 
           />
         </TouchableOpacity>
         <Image 
@@ -135,7 +138,7 @@ const VegetablesScreen = () => {
         <Text style={styles.productName} numberOfLines={2}>
           {String(item.p_name)}
         </Text>
-        <Text style={styles.productWeight}>Weight: {String(item.p_weight)} {String(item.p_unit)}</Text>
+        <Text style={styles.productWeight}>Weight: {String(item.formatted_weight)} </Text>
 
         <View style={styles.priceContainer}>
           <Text style={styles.currentPrice}>₹{String(item.p_price)}</Text>
@@ -190,6 +193,11 @@ const VegetablesScreen = () => {
     if (scrollRef.current) {
       let newX = direction === 'right' ? scrollX + scrollAmount : scrollX - scrollAmount;
       newX = Math.max(0, newX);
+      
+      // Calculate max scroll position to prevent over-scrolling
+      const maxScrollX = Math.max(0, (vegetablesToDisplay.length * scrollAmount) - width + 40);
+      newX = Math.min(newX, maxScrollX);
+      
       scrollRef.current.scrollTo({ x: newX, animated: true });
       setScrollX(newX);
     }
@@ -214,16 +222,22 @@ const VegetablesScreen = () => {
       ) : error ? (
         <Text style={styles.errorText}>Error: {String(error)}</Text>
       ) : vegetablesToDisplay.length > 0 ? (
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContainer}
-          onScroll={onScroll}
-          scrollEventThrottle={16}
-        >
-          {vegetablesToDisplay.map(renderGroceryItem)}
-        </ScrollView>
+        <View style={styles.scrollViewContainer}>
+          <ScrollView
+            ref={scrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContainer}
+            onScroll={onScroll}
+            scrollEventThrottle={16}
+            bounces={false}
+            decelerationRate="fast"
+            snapToInterval={scrollAmount}
+            snapToAlignment="start"
+          >
+            {vegetablesToDisplay.map((item, index) => renderGroceryItem(item, index))}
+          </ScrollView>
+        </View>
       ) : (
         <Text style={styles.noDataText}>No vegetables found.</Text>
       )}
@@ -234,10 +248,11 @@ const VegetablesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#ffffff', // Changed to white for seamless look
     paddingVertical: 15,
     paddingBottom: 25,
     minHeight: 400,
+    overflow: 'hidden', // Prevent content from going outside container
   },
   header: {
     flexDirection: 'row',
@@ -273,49 +288,53 @@ const styles = StyleSheet.create({
     color: '#666',
     fontWeight: 'bold',
   },
+  scrollViewContainer: {
+    flex: 1,
+    overflow: 'hidden', // Ensure ScrollView content stays within bounds
+  },
   scrollContainer: {
     paddingLeft: 20,
     paddingRight: 20,
     paddingBottom: 15,
+    alignItems: 'flex-start', // Align items to prevent vertical overflow
   },
   itemContainer: {
-    width: 210,
-    backgroundColor: '#fff',
+    width: width * 0.55, // Responsive width - 55% of screen width
+    maxWidth: 220, // Maximum width constraint
+    minWidth: 180, // Minimum width constraint
+    backgroundColor: '#ffffff', // Pure white background
     borderRadius: 12,
-    marginRight: 20,
+    marginRight: 15,
     marginBottom: 10,
     paddingBottom: 15,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 1 }, // Reduced shadow for seamless look
+    shadowOpacity: 0.05, // Very light shadow
+    shadowRadius: 4,
+    elevation: 2, // Reduced elevation
+    overflow: 'hidden', // Prevent content from overflowing item container
   },
   imageContainer: {
     position: 'relative',
-    height: 140,
-    backgroundColor: '#f8f9fa',
+    height: 120,
+    backgroundColor: '#ffffff', // Pure white background
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   wishlistIconContainer: {
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: 15,
     width: 30,
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
   },
   discountBadge: {
     position: 'absolute',
@@ -339,38 +358,40 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   productImage: {
-    width: 100,
-    height: 100,
-    resizeMode: 'contain',
+    width: '90%', // Reduced width to ensure it fits
+    height: 120,
+    marginBottom: 0,
   },
   productInfo: {
-    padding: 15,
+    padding: 12, // Reduced padding
+    flex: 1,
+    justifyContent: 'space-between',
   },
   productName: {
-    fontSize: 14,
+    fontSize: 13, // Slightly smaller font
     fontWeight: '600',
     color: '#333',
-    marginBottom: 8,
-    lineHeight: 20,
+    marginBottom: 6,
+    lineHeight: 18,
   },
   productWeight: {
-    fontSize: 12,
+    fontSize: 11, // Smaller font
     color: '#666',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
-    gap: 8,
+    marginBottom: 12,
+    gap: 6,
   },
   currentPrice: {
-    fontSize: 16,
+    fontSize: 15, // Slightly smaller
     fontWeight: 'bold',
     color: '#e74c3c',
   },
   originalPrice: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#999',
     textDecorationLine: 'line-through',
   },
@@ -378,7 +399,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
+    gap: 8,
   },
   quantitySelector: {
     flexDirection: 'row',
@@ -386,39 +407,46 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 6,
+    flex: 1,
+    maxWidth: 90, // Limit width
   },
   quantityButton: {
-    width: 32,
-    height: 32,
+    width: 28, // Smaller buttons
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
   },
   quantityButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
   },
   quantityText: {
-    paddingHorizontal: 12,
-    fontSize: 14,
+    paddingHorizontal: 8,
+    fontSize: 13,
     fontWeight: '600',
     color: '#333',
+    textAlign: 'center',
+    flex: 1,
   },
   addButton: {
     backgroundColor: '#28a745',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 6,
+    flex: 1,
+    maxWidth: 70, // Limit button width
+    alignItems: 'center',
   },
   addButtonDisabled: {
     backgroundColor: '#ccc',
   },
   addButtonText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    marginRight: 4,
+    marginRight: 2,
   },
   loadingIndicator: {
     marginTop: 20,

@@ -21,10 +21,18 @@ const HomeScreen = () => {
   const insets = useSafeAreaInsets();
 
   return (
+    <View style={styles.container}>
+      {/* Status Bar */}
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#ffffff"
+        translucent={true}
+      />
+      
+      {/* Main Content */}
     <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
-      <View style={styles.container}>
-        {/* Fixed Navbar */}
-        <View style={styles.navbarWrapper}>
+        {/* Navbar with proper top spacing */}
+        <View style={[styles.navbarWrapper, { marginTop: insets.top }]}>
           <Navbar navigation={navigation} />
         </View>
         
@@ -45,31 +53,26 @@ const HomeScreen = () => {
           <TrendingProductScreen />
           <Footer />
         </ScrollView>
+      </SafeAreaView>
       </View>
-    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#ffffff',
   },
   navbarWrapper: {
     backgroundColor: '#ffffff',
-    elevation: 4, // Android shadow
-    shadowColor: '#000', // iOS shadow
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    zIndex: 1000,
   },
   scrollView: {
     flex: 1,
+    backgroundColor: '#ffffff',
   },
   scrollContent: {
     paddingBottom: 20,

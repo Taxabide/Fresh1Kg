@@ -410,30 +410,11 @@ const MultiStepForm = () => {
               </View>
             </View>
           </View>
+          <Footer />
+        </ScrollView>
 
-          <View style={styles.contactCard}>
-            <View style={styles.contactItem}>
-              <Icon name="email" size={24} color="#27ae60" />
-              <View style={styles.contactTextContainer}>
-                <Text style={styles.contactTitle}>Mail Us On!</Text>
-                <Text style={[styles.contactSubtext, styles.contactLink]}>info@example.com</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.contactCard}>
-            <View style={styles.contactItem}>
-              <Icon name="call" size={24} color="#27ae60" />
-              <View style={styles.contactTextContainer}>
-                <Text style={styles.contactTitle}>Quick Call!</Text>
-                <Text style={[styles.contactSubtext, styles.contactLink]}>12345678</Text>
-              </View>
-            </View>
-          </View>
-        </View>
         
-        <Footer />
-      </ScrollView>
+      </SafeAreaView>
     </View>
   );
 };
@@ -441,49 +422,25 @@ const MultiStepForm = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
   },
   safeArea: {
-    backgroundColor: '#fff',
-    zIndex: 1000,
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  navbarWrapper: {
+    backgroundColor: '#ffffff',
   },
   scrollView: {
     flex: 1,
   },
-  scrollViewContent: {
-    flexGrow: 1,
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-  heroSection: {
-    height: 200,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  heroImage: {
-    opacity: 0.8,
-  },
-  // heroOverlay: {
-  //   backgroundColor: 'rgba(0, 0, 0, 0.4)',
-  //   padding: 20,
-  //   borderRadius: 10,
-  // },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    fontFamily: 'sans-serif',
-  },
-  formSection: {
-    backgroundColor: '#f8f9fa',
-    padding: 20,
-    minHeight: height - 300,
-  },
-  formTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    lineHeight: 30,
+  formContainer: {
+    flex: 1,
+    paddingTop: 20,
   },
   progressContainer: {
     flexDirection: 'row',
@@ -593,7 +550,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 20,
   },
-  primaryButton: {
+  button: {
     backgroundColor: '#27ae60',
     paddingVertical: 15,
     paddingHorizontal: 30,
@@ -601,27 +558,20 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
   },
-  fullWidthButton: {
+  previousButton: {
     marginLeft: 0,
   },
-  primaryButtonText: {
+  nextButton: {
+    marginRight: 0,
+  },
+  buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  secondaryButton: {
-    backgroundColor: '#fff',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#27ae60',
-    flex: 1,
-    marginRight: 10,
-  },
-  secondaryButtonText: {
-    color: '#27ae60',
+  previousButtonText: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',

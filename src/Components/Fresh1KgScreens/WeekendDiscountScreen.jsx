@@ -16,32 +16,19 @@ const WeekendDiscountScreen = () => {
   const products = [
     {
       id: 1,
-      title: 'Drink Fresh Corn Juice',
-      subtitle: 'Good Taste',
+      title: 'Green. Clean. Delivered',
+      subtitle: 'To Your Kitchen',
       backgroundImage: require('../../assets/images/P1.jpg'),
       gradientColors: ['rgba(245, 243, 184, 0.1)', 'rgba(245, 243, 184, 0.3)'],
     },
     {
       id: 2,
-      title: 'Organic Lemon Flavored',
-      subtitle: 'Banana Chips',
+      title: 'Juicy, Handpicked Fruits',
+      subtitle: 'Taste the Freshness',
       backgroundImage: require('../../assets/images/P12.jpg'),
       gradientColors: ['rgba(212, 230, 212, 0.1)', 'rgba(212, 230, 212, 0.3)'],
     },
-    {
-      id: 3,
-      title: 'Nozes Pecanera Brasil',
-      subtitle: 'Chocolate Snacks',
-      backgroundImage: require('../../assets/images/P9.jpg'),
-      gradientColors: ['rgba(230, 212, 196, 0.1)', 'rgba(230, 212, 196, 0.3)'],
-    },
-    {
-      id: 4,
-      title: 'Strawberry Water Drinks',
-      subtitle: 'Flavors Awesome',
-      backgroundImage: require('../../assets/images/P13.jpg'),
-      gradientColors: ['rgba(230, 196, 230, 0.1)', 'rgba(230, 196, 230, 0.3)'],
-    },
+   
   ];
 
   const handleShopNow = (productId) => {
