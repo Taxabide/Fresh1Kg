@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,12 @@ import {
   Alert,
   Dimensions,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDispatch, useSelector } from 'react-redux';
+import { submitContactForm } from '../../redux/actions/contactActions';
 
 import Navbar from '../Navbar/Navbar';
 import Footer from '../Footer/Footer';
@@ -23,18 +25,35 @@ const { width, height } = Dimensions.get('window');
 
 const MultiStepForm = () => {
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
+  const dispatch = useDispatch();
+  const { loading, success, error } = useSelector(state => state.contact);
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    subject: '',
-    message: '',
+    contact_name: '',
+    contact_email: '',
+    contact_phone: '',
+    contact_subject: '',
+    contact_message: '',
   });
   const [errors, setErrors] = useState({});
 
   const totalSteps = 3;
+
+  // Reset form after successful submission
+  useEffect(() => {
+    if (success) {
+      setFormData({
+        contact_name: '',
+        contact_email: '',
+        contact_phone: '',
+        contact_subject: '',
+        contact_message: '',
+      });
+      setCurrentStep(1);
+      setErrors({});
+    }
+  }, [success]);
 
   // Validation functions
   const validateStep = (step) => {
@@ -42,28 +61,61 @@ const MultiStepForm = () => {
     
     switch (step) {
       case 1:
-        if (!formData.name.trim()) newErrors.name = 'Name is required';
-        if (!formData.email.trim()) {
-          newErrors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-          newErrors.email = 'Email is invalid';
+        if (!formData.contact_name.trim()) {
+          newErrors.contact_name = 'Name is required';
+        }
+        if (!formData.contact_email.trim()) {
+          newErrors.contact_email = 'Email is required';
+        } else if (!/\S+@\S+\.\S+/.test(formData.contact_email.trim())) {
+          newErrors.contact_email = 'Email is invalid';
         }
         break;
       case 2:
-        if (!formData.phone.trim()) {
-          newErrors.phone = 'Phone number is required';
-        } else if (!/^\d{10,}$/.test(formData.phone.replace(/\D/g, ''))) {
-          newErrors.phone = 'Phone number must be at least 10 digits';
+        if (!formData.contact_phone.trim()) {
+          newErrors.contact_phone = 'Phone number is required';
+        } else if (!/^\d{10,}$/.test(formData.contact_phone.replace(/\D/g, ''))) {
+          newErrors.contact_phone = 'Phone number must be at least 10 digits';
         }
-        if (!formData.subject.trim()) newErrors.subject = 'Subject is required';
+        if (!formData.contact_subject.trim()) {
+          newErrors.contact_subject = 'Subject is required';
+        }
         break;
       case 3:
-        if (!formData.message.trim()) newErrors.message = 'Message is required';
+        if (!formData.contact_message.trim()) {
+          newErrors.contact_message = 'Message is required';
+        } else if (formData.contact_message.trim().length < 10) {
+          newErrors.contact_message = 'Message must be at least 10 characters long';
+        }
         break;
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const validateAllFields = () => {
+    const allErrors = {};
+    
+    if (!formData.contact_name.trim()) allErrors.contact_name = 'Name is required';
+    if (!formData.contact_email.trim()) {
+      allErrors.contact_email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.contact_email.trim())) {
+      allErrors.contact_email = 'Email is invalid';
+    }
+    if (!formData.contact_phone.trim()) {
+      allErrors.contact_phone = 'Phone number is required';
+    } else if (!/^\d{10,}$/.test(formData.contact_phone.replace(/\D/g, ''))) {
+      allErrors.contact_phone = 'Phone number must be at least 10 digits';
+    }
+    if (!formData.contact_subject.trim()) allErrors.contact_subject = 'Subject is required';
+    if (!formData.contact_message.trim()) {
+      allErrors.contact_message = 'Message is required';
+    } else if (formData.contact_message.trim().length < 10) {
+      allErrors.contact_message = 'Message must be at least 10 characters long';
+    }
+    
+    setErrors(allErrors);
+    return Object.keys(allErrors).length === 0;
   };
 
   const handleNext = () => {
@@ -82,35 +134,64 @@ const MultiStepForm = () => {
     }
   };
 
-  const handleSubmit = () => {
-    Alert.alert(
-      'Success!',
-      'Your message has been sent successfully. We will get back to you soon.',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Reset form
-            setFormData({
-              name: '',
-              email: '',
-              phone: '',
-              subject: '',
-              message: '',
-            });
-            setCurrentStep(1);
-            setErrors({});
-          },
-        },
-      ]
-    );
+  const handleSubmit = async () => {
+    if (validateAllFields()) {
+      // Prepare form data with trimmed values
+      const preparedFormData = {
+        contact_name: formData.contact_name.trim(),
+        contact_email: formData.contact_email.trim(),
+        contact_phone: formData.contact_phone.replace(/\D/g, ''), // Remove non-digits
+        contact_subject: formData.contact_subject.trim(),
+        contact_message: formData.contact_message.trim(),
+      };
+
+      // Additional validation before submission
+      const isValid = Object.values(preparedFormData).every(value => value && value.length > 0);
+      
+      if (!isValid) {
+        Alert.alert(
+          'Validation Error',
+          'Please fill in all required fields.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      console.log('Submitting prepared form data:', preparedFormData);
+      const success = await dispatch(submitContactForm(preparedFormData));
+      
+      if (success) {
+        console.log('Form submitted successfully');
+        // Form reset is handled by the useEffect watching for success
+      } else {
+        console.log('Form submission failed');
+        Alert.alert(
+          'Submission Error',
+          'Failed to send message. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
+    } else {
+      console.log('Form validation failed:', errors);
+      Alert.alert(
+        'Validation Error',
+        'Please check all fields and try again.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const updateFormData = (field, value) => {
-    setFormData({ ...formData, [field]: value });
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors({ ...errors, [field]: '' });
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
     }
   };
 
@@ -153,26 +234,26 @@ const MultiStepForm = () => {
       
       <View style={styles.inputContainer}>
         <TextInput
-          style={[styles.input, errors.name && styles.inputError]}
+          style={[styles.input, errors.contact_name && styles.inputError]}
           placeholder="Name*"
           placeholderTextColor="#999"
-          value={formData.name}
-          onChangeText={(text) => updateFormData('name', text)}
+          value={formData.contact_name}
+          onChangeText={(text) => updateFormData('contact_name', text)}
         />
-        {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+        {errors.contact_name && <Text style={styles.errorText}>{errors.contact_name}</Text>}
       </View>
 
       <View style={styles.inputContainer}>
         <TextInput
-          style={[styles.input, errors.email && styles.inputError]}
+          style={[styles.input, errors.contact_email && styles.inputError]}
           placeholder="Email*"
           placeholderTextColor="#999"
-          value={formData.email}
-          onChangeText={(text) => updateFormData('email', text)}
+          value={formData.contact_email}
+          onChangeText={(text) => updateFormData('contact_email', text)}
           keyboardType="email-address"
           autoCapitalize="none"
         />
-        {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+        {errors.contact_email && <Text style={styles.errorText}>{errors.contact_email}</Text>}
       </View>
     </View>
   );
@@ -184,25 +265,25 @@ const MultiStepForm = () => {
       
       <View style={styles.inputContainer}>
         <TextInput
-          style={[styles.input, errors.phone && styles.inputError]}
+          style={[styles.input, errors.contact_phone && styles.inputError]}
           placeholder="Phone No.*"
           placeholderTextColor="#999"
-          value={formData.phone}
-          onChangeText={(text) => updateFormData('phone', text)}
+          value={formData.contact_phone}
+          onChangeText={(text) => updateFormData('contact_phone', text)}
           keyboardType="phone-pad"
         />
-        {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
+        {errors.contact_phone && <Text style={styles.errorText}>{errors.contact_phone}</Text>}
       </View>
 
       <View style={styles.inputContainer}>
         <TextInput
-          style={[styles.input, errors.subject && styles.inputError]}
+          style={[styles.input, errors.contact_subject && styles.inputError]}
           placeholder="Subject*"
           placeholderTextColor="#999"
-          value={formData.subject}
-          onChangeText={(text) => updateFormData('subject', text)}
+          value={formData.contact_subject}
+          onChangeText={(text) => updateFormData('contact_subject', text)}
         />
-        {errors.subject && <Text style={styles.errorText}>{errors.subject}</Text>}
+        {errors.contact_subject && <Text style={styles.errorText}>{errors.contact_subject}</Text>}
       </View>
     </View>
   );
@@ -214,71 +295,119 @@ const MultiStepForm = () => {
       
       <View style={styles.inputContainer}>
         <TextInput
-          style={[styles.messageInput, errors.message && styles.inputError]}
+          style={[styles.messageInput, errors.contact_message && styles.inputError]}
           placeholder="Write Message Here*"
           placeholderTextColor="#999"
-          value={formData.message}
-          onChangeText={(text) => updateFormData('message', text)}
+          value={formData.contact_message}
+          onChangeText={(text) => updateFormData('contact_message', text)}
           multiline
           numberOfLines={6}
           textAlignVertical="top"
         />
-        {errors.message && <Text style={styles.errorText}>{errors.message}</Text>}
+        {errors.contact_message && <Text style={styles.errorText}>{errors.contact_message}</Text>}
       </View>
 
       {/* Summary */}
       <View style={styles.summaryContainer}>
         <Text style={styles.summaryTitle}>Review Your Information:</Text>
-        <Text style={styles.summaryText}>Name: {formData.name}</Text>
-        <Text style={styles.summaryText}>Email: {formData.email}</Text>
-        <Text style={styles.summaryText}>Phone: {formData.phone}</Text>
-        <Text style={styles.summaryText}>Subject: {formData.subject}</Text>
+        <Text style={styles.summaryText}>Name: {formData.contact_name}</Text>
+        <Text style={styles.summaryText}>Email: {formData.contact_email}</Text>
+        <Text style={styles.summaryText}>Phone: {formData.contact_phone}</Text>
+        <Text style={styles.summaryText}>Subject: {formData.contact_subject}</Text>
       </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#ffffff"
-        translucent={true}
-      />
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <SafeAreaView style={styles.safeArea}>
+        <Navbar navigation={navigation} />
+      </SafeAreaView>
       
-      <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
-        <View style={[styles.navbarWrapper, { marginTop: insets.top }]}>
-          <Navbar navigation={navigation} />
+      <ScrollView 
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContent}
+      >
+        {/* Hero Section */}
+        <ImageBackground
+          source={require('../../assets/images/contact.jpg')}
+          style={styles.heroSection}
+          imageStyle={styles.heroImage}
+        >
+          <View style={styles.heroOverlay}>
+            <Text style={styles.heroTitle}>Ask Us Question</Text>
+          </View>
+        </ImageBackground>
+
+        {/* Form Section */}
+        <View style={styles.formSection}>
+          <Text style={styles.formTitle}>Fill Up The Form If</Text>
+          <Text style={styles.formTitle}>You Have Any</Text>
+          <Text style={styles.formTitle}>Question</Text>
+
+          {/* Progress Bar */}
+          {renderProgressBar()}
+
+          {/* Form Steps */}
+          {currentStep === 1 && renderStep1()}
+          {currentStep === 2 && renderStep2()}
+          {currentStep === 3 && renderStep3()}
+
+          {/* Error Message */}
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorMessage}>{error}</Text>
+            </View>
+          )}
+
+          {/* Navigation Buttons */}
+          <View style={styles.buttonContainer}>
+            {currentStep > 1 && (
+              <TouchableOpacity
+                style={[
+                  styles.secondaryButton,
+                  loading && styles.disabledButton
+                ]}
+                onPress={handlePrevious}
+                disabled={loading}
+              >
+                <Text style={styles.secondaryButtonText}>Previous</Text>
+              </TouchableOpacity>
+            )}
+            
+            <TouchableOpacity
+              style={[
+                styles.primaryButton, 
+                currentStep === 1 && styles.fullWidthButton,
+                loading && styles.disabledButton
+              ]}
+              onPress={handleNext}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.primaryButtonText}>
+                  {currentStep === totalSteps ? 'Send Message' : 'Next'}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.formContainer}>
-            {renderProgressBar()}
-            {currentStep === 1 && renderStep1()}
-            {currentStep === 2 && renderStep2()}
-            {currentStep === 3 && renderStep3()}
-            
-            <View style={styles.buttonContainer}>
-              {currentStep > 1 && (
-                <TouchableOpacity
-                  style={[styles.button, styles.previousButton]}
-                  onPress={handlePrevious}
-                >
-                  <Text style={[styles.buttonText, styles.previousButtonText]}>Previous</Text>
-                </TouchableOpacity>
-              )}
-              
-              <TouchableOpacity
-                style={[styles.button, styles.nextButton]}
-                onPress={handleNext}
-              >
-                <Text style={styles.buttonText}>
-                  {currentStep === totalSteps ? 'Submit' : 'Next'}
-                </Text>
-              </TouchableOpacity>
+        {/* Contact Information Section */}
+        <View style={styles.contactSection}>
+          <Text style={styles.contactMainTitle}>You can ask us questions !</Text>
+          
+          <View style={styles.contactCard}>
+            <View style={styles.contactItem}>
+              <Icon name="location-on" size={24} color="#27ae60" />
+              <View style={styles.contactTextContainer}>
+                <Text style={styles.contactTitle}>Our Location!</Text>
+                <Text style={styles.contactSubtext}>68 Neswilla Road Dehradun</Text>
+              </View>
             </View>
           </View>
           <Footer />
@@ -490,6 +619,20 @@ const styles = StyleSheet.create({
   contactLink: {
     color: '#27ae60',
     textDecorationLine: 'underline',
+  },
+  disabledButton: {
+    opacity: 0.7,
+  },
+  errorContainer: {
+    marginVertical: 10,
+    padding: 10,
+    backgroundColor: '#ffebee',
+    borderRadius: 5,
+  },
+  errorMessage: {
+    color: '#c62828',
+    textAlign: 'center',
+    fontSize: 14,
   },
 });
 

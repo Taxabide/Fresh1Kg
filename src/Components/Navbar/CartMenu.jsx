@@ -43,7 +43,17 @@ const CartMenu = ({ navigation }) => {
         {
           text: 'Remove',
           style: 'destructive',
-          onPress: () => dispatch(removeCartItem(id))
+          onPress: () => {
+            if (user && user.u_id) {
+              dispatch(removeCartItem(id, user.u_id))
+                .catch(error => {
+                  // Error is already handled in the action with Alert
+                  console.error('Error removing item:', error);
+                });
+            } else {
+              Alert.alert('Error', 'Please log in to remove items from cart');
+            }
+          }
         }
       ]
     );

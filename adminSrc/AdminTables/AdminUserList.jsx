@@ -7,114 +7,43 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
-  FlatList,
   ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchAdminUsers } from '../../src/redux/actions/adminUserActions';
 import Adminnavbar from '../AdminNavbar/Adminavbar';
 import AdminSidebar from '../AdminNavbar/AdminSidebar';
-import AdminProfileScreen from '../AdminProfileScreen';
 
 const AdminUserList = () => {
   const [searchText, setSearchText] = useState('');
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(6);
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
   
-  // Sample data - Replace with API call
-  const sampleUsers = [
-    {
-      id: 1,
-      name: 'Gaurav',
-      email: 'ggaur281@gmail.com',
-      number: '7457010522',
-      addDate: '12-Jun-2025',
-      address: '',
-      pincode: '',
-      profilePhoto: null
-    },
-    {
-      id: 2,
-      name: 'Test User',
-      email: 'test@gmail.com',
-      number: '123456789',
-      addDate: '12-Jun-2025',
-      address: '',
-      pincode: '',
-      profilePhoto: null
-    },
-    {
-      id: 3,
-      name: 'Gaurav Sharma',
-      email: 'gaurav@gmail.com',
-      number: '9927045632',
-      addDate: '10-Jun-2025',
-      address: '',
-      pincode: '0',
-      profilePhoto: null
-    },
-    {
-      id: 4,
-      name: 'Vivek',
-      email: 'vivek@gmail.com',
-      number: '9978678789',
-      addDate: '10-Jun-2025',
-      address: '',
-      pincode: '2563989',
-      profilePhoto: null
-    },
-    {
-      id: 5,
-      name: 'Ajay Chauhan',
-      email: 'ajaychauhanuk07@gmail.com',
-      number: '9193555830',
-      addDate: '30-May-2025',
-      address: '',
-      pincode: '',
-      profilePhoto: null
-    },
-    {
-      id: 6,
-      name: 'Aman',
-      email: 'aman@gmail.com',
-      number: '2222222222',
-      addDate: '10-May-2025',
-      address: 'dun',
-      pincode: '248002',
-      profilePhoto: null
-    }
-  ];
+  const dispatch = useDispatch();
+  const { users, loading, error } = useSelector(state => state.adminUsers);
 
   useEffect(() => {
-    // TODO: Replace with actual API call
-    fetchUsers();
-  }, []);
+    dispatch(fetchAdminUsers());
+  }, [dispatch]);
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      // API call here
-      // const response = await fetch('YOUR_API_ENDPOINT/users');
-      // const data = await response.json();
-      // setUsers(data);
-      
-      // For now using sample data
-      setTimeout(() => {
-        setUsers(sampleUsers);
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setLoading(false);
-    }
+  // Sort users alphabetically
+  const sortedUsers = [...users].sort((a, b) => {
+    const nameA = (a.u_name || '').toLowerCase();
+    const nameB = (b.u_name || '').toLowerCase();
+    return sortOrder === 'asc' 
+      ? nameA.localeCompare(nameB)
+      : nameB.localeCompare(nameA);
+  });
+
+  const toggleSortOrder = () => {
+    setSortOrder(prevOrder => prevOrder === 'asc' ? 'desc' : 'asc');
   };
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchText.toLowerCase()) ||
-    user.number.includes(searchText)
+  const filteredUsers = sortedUsers.filter(user =>
+    user.u_name.toLowerCase().includes(searchText.toLowerCase()) ||
+    user.u_email.toLowerCase().includes(searchText.toLowerCase()) ||
+    user.u_number.includes(searchText)
   );
 
   // Get current users for pagination
@@ -132,46 +61,43 @@ const AdminUserList = () => {
   const handleExport = (format) => {
     // TODO: Implement export functionality based on format
     console.log(`Exporting data as ${format}`);
-    // You can implement actual export logic here
-    // For CSV: convert data to CSV format
-    // For SQL: generate INSERT statements
-    // For TXT: format as plain text
-    // For JSON: JSON.stringify(filteredUsers)
   };
 
   const renderUserRow = ({ item }) => (
     <View style={styles.tableRow}>
-      <Text style={[styles.tableCell, styles.nameCell]}>{item.name}</Text>
-      <Text style={[styles.tableCell, styles.emailCell]}>{item.email}</Text>
-      <Text style={[styles.tableCell, styles.numberCell]}>{item.number}</Text>
-      <Text style={[styles.tableCell, styles.dateCell]}>{item.addDate}</Text>
-      <Text style={[styles.tableCell, styles.addressCell]}>{item.address || '-'}</Text>
-      <Text style={[styles.tableCell, styles.pincodeCell]}>{item.pincode || '-'}</Text>
+      <Text style={[styles.tableCell, styles.nameCell]}>{item.u_name}</Text>
+      <Text style={[styles.tableCell, styles.emailCell]}>{item.u_email}</Text>
+      <Text style={[styles.tableCell, styles.numberCell]}>{item.u_number}</Text>
+      <Text style={[styles.tableCell, styles.dateCell]}>{item.u_add_date}</Text>
+      <Text style={[styles.tableCell, styles.addressCell]}>{item.u_address || '-'}</Text>
+      <Text style={[styles.tableCell, styles.pincodeCell]}>{item.u_pincode || '-'}</Text>
       <View style={[styles.tableCell, styles.photoCell]}>
-        {item.profilePhoto ? (
-          <Image source={{ uri: item.profilePhoto }} style={styles.profileImage} />
+        {item.u_profile_photo ? (
+          <Image source={{ uri: item.u_profile_photo }} style={styles.profileImage} />
         ) : (
           <View style={styles.noImageContainer}>
             <Text style={styles.noImageText}>No Image</Text>
           </View>
         )}
       </View>
-      <TouchableOpacity style={styles.actionButton}>
-        <Text style={styles.actionText}>Edit</Text>
-      </TouchableOpacity>
     </View>
   );
 
   const renderHeader = () => (
     <View style={styles.tableHeader}>
-      <Text style={[styles.headerCell, styles.nameCell]}>Name</Text>
+      <TouchableOpacity 
+        style={[styles.headerCell, styles.nameCell, styles.sortableHeader]} 
+        onPress={toggleSortOrder}
+      >
+        <Text style={styles.headerText}>Name</Text>
+        <Text style={styles.sortIcon}>{sortOrder === 'asc' ? '↓' : '↑'}</Text>
+      </TouchableOpacity>
       <Text style={[styles.headerCell, styles.emailCell]}>Email</Text>
       <Text style={[styles.headerCell, styles.numberCell]}>Number</Text>
       <Text style={[styles.headerCell, styles.dateCell]}>Add Date</Text>
       <Text style={[styles.headerCell, styles.addressCell]}>Address</Text>
       <Text style={[styles.headerCell, styles.pincodeCell]}>Pincode</Text>
       <Text style={[styles.headerCell, styles.photoCell]}>Photo</Text>
-      <Text style={[styles.headerCell, styles.actionCell]}>Action</Text>
     </View>
   );
 
@@ -236,19 +162,21 @@ const AdminUserList = () => {
                       <ActivityIndicator size="large" color="#4CAF50" />
                       <Text style={styles.loadingText}>Loading users...</Text>
                     </View>
+                  ) : error ? (
+                    <View style={styles.emptyContainer}>
+                      <Text style={styles.emptyText}>{error}</Text>
+                    </View>
+                  ) : filteredUsers.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                      <Text style={styles.emptyText}>No users found</Text>
+                    </View>
                   ) : (
                     <View style={styles.tableBody}>
-                      {filteredUsers.length === 0 ? (
-                        <View style={styles.emptyContainer}>
-                          <Text style={styles.emptyText}>No users found</Text>
+                      {filteredUsers.map((item) => (
+                        <View key={item.u_id.toString()}>
+                          {renderUserRow({ item })}
                         </View>
-                      ) : (
-                        currentUsers.map((item) => (
-                          <View key={item.id.toString()}>
-                            {renderUserRow({ item })}
-                          </View>
-                        ))
-                      )}
+                      ))}
                     </View>
                   )}
                 </View>
@@ -293,7 +221,7 @@ const AdminUserList = () => {
               <View style={styles.bottomSection}>
                 <View style={styles.entriesInfo}>
                   <Text style={styles.entriesText}>
-                    Showing {indexOfFirstUser + 1} to {Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} entries
+                    Showing 1 to {Math.min(filteredUsers.length, users.length)} of {users.length} entries
                   </Text>
                 </View>
                 
@@ -611,58 +539,20 @@ const styles = StyleSheet.create({
     color: '#28a745',
     fontWeight: '600',
   },
-  paginationContainer: {
+  sortableHeader: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 20,
-    gap: 10,
+    justifyContent: 'space-between',
   },
-  pageNumbers: {
-    flexDirection: 'row',
-    gap: 5,
-  },
-  paginationButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    backgroundColor: '#4CAF50',
-    borderRadius: 5,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  paginationButtonDisabled: {
-    backgroundColor: '#e0e0e0',
-  },
-  paginationButtonText: {
-    color: '#fff',
+  headerText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: 'bold',
+    color: '#495057',
   },
-  paginationButtonTextDisabled: {
-    color: '#999',
-  },
-  pageNumberButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#fff',
-    borderRadius: 5,
-    minWidth: 40,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  pageNumberButtonActive: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
-  },
-  pageNumberText: {
-    color: '#666',
+  sortIcon: {
+    marginLeft: 5,
     fontSize: 14,
-    fontWeight: '500',
-  },
-  pageNumberTextActive: {
-    color: '#fff',
+    color: '#495057',
   },
 });
 
