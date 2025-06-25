@@ -12,7 +12,10 @@ import EditProfileScreen from '../Components/auth/EditProfileScreen.jsx';
 // Only import files that actually exist
 import ContactScreen from '../Components/SideMenuBar/ContactScreen';
 import AllProductsScreen from '../Components/SideMenuBar/AllProductsScreen';
-import MyOrdersScreen from '../Components/MyOrders/MyOrdersScreen';
+import MyOrdersScreen from '../Components/SideMenuBar/MyOrders/MyOrdersScreen.jsx';
+import ViewOrderDetails from '../Components/SideMenuBar/MyOrders/ViewOrderDetails.jsx';
+import TrackMyOrder from '../Components/SideMenuBar/MyOrders/TrackMyOrder.jsx';
+import Receipt from '../Components/SideMenuBar/MyOrders/Receipt.jsx';
 import SearchResultsScreen from '../Components/Fresh1KgScreens/SearchResultsScreen';
 import { useSelector } from 'react-redux';
 import WishlistScreen from '../Components/Fresh1KgScreens/WishlistScreen.jsx';
@@ -48,6 +51,9 @@ const AppNavigator = () => {
       <Stack.Screen name="CartMenu" component={CartMenu} />
       <Stack.Screen name="ContactScreen" component={ContactScreen} />
       <Stack.Screen name="MyOrdersScreen" component={MyOrdersScreen} />
+      <Stack.Screen name="ViewOrderDetails" component={ViewOrderDetails} />
+      <Stack.Screen name="TrackMyOrder" component={TrackMyOrder} />
+      <Stack.Screen name="Receipt" component={Receipt} />
       <Stack.Screen name="ProductsScreen" component={AllProductsScreen} />
       <Stack.Screen name="SearchResultsScreen" component={SearchResultsScreen} />
       <Stack.Screen name="WishlistScreen" component={WishlistScreen} />
