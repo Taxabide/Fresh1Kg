@@ -115,7 +115,7 @@ const FruitScreen = () => {
         >
           <Icon 
             name="heart" 
-            size={18} 
+            size={16} 
             color={addToWishlistLoading ? '#ccc' : '#ffffff'} 
           />
         </TouchableOpacity>
@@ -124,7 +124,7 @@ const FruitScreen = () => {
           style={styles.productImage} 
           resizeMode="contain" 
           onError={(e) => {
-            // 
+            // Handle error
           }}
         />
         <View style={styles.productInfo}>
@@ -134,42 +134,22 @@ const FruitScreen = () => {
           <Text style={styles.productSize}>
             Weight: {product.formatted_weight || ''}
           </Text>
-          <View style={styles.priceContainer}>
-            <Text style={styles.price}>
-              ₹{product.p_price || '0'}
-            </Text>
-            {product.original_price && (
-              <Text style={styles.originalPrice}>
-                ₹{product.original_price}
+          <View style={styles.bottomSection}>
+            <View style={styles.priceContainer}>
+              <Text style={styles.price}>
+                ₹{product.p_price || '0'}
               </Text>
-            )}
-          </View>
-          <View style={styles.quantityAndAdd}>
-            <View style={styles.quantityContainer}>
-              <TouchableOpacity 
-                style={styles.quantityButton}
-                onPress={() => updateQuantity(product.p_id, -1)}
-              >
-                <Text style={styles.quantityButtonText}>−</Text>
-              </TouchableOpacity>
-              <Text style={styles.quantityText}>
-                {getQuantity(product.p_id)}
-              </Text>
-              <TouchableOpacity 
-                style={styles.quantityButton}
-                onPress={() => updateQuantity(product.p_id, 1)}
-              >
-                <Text style={styles.quantityButtonText}>+</Text>
-              </TouchableOpacity>
+              {product.original_price && (
+                <Text style={styles.originalPrice}>
+                  ₹{product.original_price}
+                </Text>
+              )}
             </View>
             <TouchableOpacity
               style={styles.addButton} 
               onPress={() => addToCartHandler(product)}
             >
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                <Text style={styles.addButtonText}>Add</Text>
-                <Icon name="shopping-cart" size={14} color="#fff" />
-              </View>
+              <Text style={styles.addButtonText}>ADD TO CART</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -287,21 +267,20 @@ const styles = StyleSheet.create({
   },
   productsGrid: {
     flexDirection: 'column',
-    gap: 12,
-    padding: 16,
+    padding: 12,
   },
   productCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 15,
-    marginHorizontal: 8,
-    marginBottom: 16,
+    padding: 12,
+    marginBottom: 12,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     position: 'relative',
+    width: '100%',
   },
   promoSection: {
     padding: 12,
@@ -332,86 +311,69 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
     borderRadius: 15,
-    width: 30,
-    height: 30,
+    width: 28,
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
   },
   productImage: {
     width: '100%',
-    height: 150,
-    marginBottom: 8,
+    height: 140,
+    resizeMode: 'contain',
+    backgroundColor: '#fff',
+    marginBottom: 12,
   },
   productInfo: {
     flex: 1,
   },
   productName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     color: '#333',
     marginBottom: 4,
-    lineHeight: 18,
+    lineHeight: 20,
   },
   productSize: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#666',
     marginBottom: 8,
   },
-  priceContainer: {
+  bottomSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    gap: 8,
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  priceContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   price: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#e53e3e',
+    marginBottom: 2,
   },
   originalPrice: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#999',
     textDecorationLine: 'line-through',
   },
-  quantityAndAdd: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  quantityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 6,
-  },
-  quantityButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  quantityButtonText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  quantityText: {
-    paddingHorizontal: 12,
-    fontSize: 14,
-    fontWeight: '500',
-  },
   addButton: {
     backgroundColor: '#068A4F',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,
+    elevation: 1,
   },
   addButtonText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
-    marginRight: 4,
+    letterSpacing: 0.5,
   },
   promoCardContainer: {
     height: 190,

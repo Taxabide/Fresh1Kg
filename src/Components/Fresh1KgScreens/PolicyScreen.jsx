@@ -13,6 +13,7 @@ import {useNavigation} from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const PolicyScreen = () => {
   const navigation = useNavigation();
@@ -40,8 +41,8 @@ const PolicyScreen = () => {
     },
     {
       id: 3,
-      iconName: 'local-florist', // Flower/natural icon for dry fruits
-      iconType: 'MaterialIcons',
+      iconName: 'peanut',
+      iconType: 'MaterialCommunityIcons',
       title: 'Dry-Fruits',
       subtitle: 'Premium Nuts, Rich in Nutrition',
       backgroundColor: '#F3E5F5',
@@ -62,6 +63,7 @@ const PolicyScreen = () => {
       MaterialIcons: MaterialIcons,
       Feather: Feather,
       FontAwesome: FontAwesome,
+      MaterialCommunityIcons: MaterialCommunityIcons,
     }[iconType];
 
     if (!IconComponent) {
