@@ -323,97 +323,96 @@ const MultiStepForm = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <SafeAreaView style={styles.safeArea}>
         <Navbar navigation={navigation} />
-      </SafeAreaView>
-      
-      <ScrollView 
-        style={styles.scrollView} 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollViewContent}
-      >
-        {/* Hero Section */}
-        <ImageBackground
-          source={require('../../assets/images/contact.jpg')}
-          style={styles.heroSection}
-          imageStyle={styles.heroImage}
+        
+        <ScrollView 
+          style={styles.scrollView} 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollViewContent}
         >
-          <View style={styles.heroOverlay}>
-            <Text style={styles.heroTitle}>Ask Us Question</Text>
-          </View>
-        </ImageBackground>
-
-        {/* Form Section */}
-        <View style={styles.formSection}>
-          <Text style={styles.formTitle}>Fill Up The Form If</Text>
-          <Text style={styles.formTitle}>You Have Any</Text>
-          <Text style={styles.formTitle}>Question</Text>
-
-          {/* Progress Bar */}
-          {renderProgressBar()}
-
-          {/* Form Steps */}
-          {currentStep === 1 && renderStep1()}
-          {currentStep === 2 && renderStep2()}
-          {currentStep === 3 && renderStep3()}
-
-          {/* Error Message */}
-          {error && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorMessage}>{error}</Text>
+          {/* Hero Section */}
+          <ImageBackground
+            source={require('../../assets/images/contact.jpg')}
+            style={styles.heroSection}
+            imageStyle={styles.heroImage}
+          >
+            <View style={styles.heroOverlay}>
+              <Text style={styles.heroTitle}>Ask Us Question</Text>
             </View>
-          )}
+          </ImageBackground>
 
-          {/* Navigation Buttons */}
-          <View style={styles.buttonContainer}>
-            {currentStep > 1 && (
+          {/* Form Section */}
+          <View style={styles.formSection}>
+            <Text style={styles.formTitle}>Fill Up The Form If</Text>
+            <Text style={styles.formTitle}>You Have Any</Text>
+            <Text style={styles.formTitle}>Question</Text>
+
+            {/* Progress Bar */}
+            {renderProgressBar()}
+
+            {/* Form Steps */}
+            {currentStep === 1 && renderStep1()}
+            {currentStep === 2 && renderStep2()}
+            {currentStep === 3 && renderStep3()}
+
+            {/* Error Message */}
+            {error && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorMessage}>{error}</Text>
+              </View>
+            )}
+
+            {/* Navigation Buttons */}
+            <View style={styles.buttonContainer}>
+              {currentStep > 1 && (
+                <TouchableOpacity
+                  style={[
+                    styles.secondaryButton,
+                    loading && styles.disabledButton
+                  ]}
+                  onPress={handlePrevious}
+                  disabled={loading}
+                >
+                  <Text style={styles.secondaryButtonText}>Previous</Text>
+                </TouchableOpacity>
+              )}
+              
               <TouchableOpacity
                 style={[
-                  styles.secondaryButton,
+                  styles.primaryButton, 
+                  currentStep === 1 && styles.fullWidthButton,
                   loading && styles.disabledButton
                 ]}
-                onPress={handlePrevious}
+                onPress={handleNext}
                 disabled={loading}
               >
-                <Text style={styles.secondaryButtonText}>Previous</Text>
+                {loading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.primaryButtonText}>
+                    {currentStep === totalSteps ? 'Send Message' : 'Next'}
+                  </Text>
+                )}
               </TouchableOpacity>
-            )}
-            
-            <TouchableOpacity
-              style={[
-                styles.primaryButton, 
-                currentStep === 1 && styles.fullWidthButton,
-                loading && styles.disabledButton
-              ]}
-              onPress={handleNext}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.primaryButtonText}>
-                  {currentStep === totalSteps ? 'Send Message' : 'Next'}
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Contact Information Section */}
-        <View style={styles.contactSection}>
-          <Text style={styles.contactMainTitle}>You can ask us questions !</Text>
-          
-          <View style={styles.contactCard}>
-            <View style={styles.contactItem}>
-              <Icon name="location-on" size={24} color="#27ae60" />
-              <View style={styles.contactTextContainer}>
-                <Text style={styles.contactTitle}>Our Location!</Text>
-                <Text style={styles.contactSubtext}>68 Neswilla Road Dehradun</Text>
-              </View>
             </View>
           </View>
-          <Footer />
-        </ScrollView>
 
-        
+          {/* Contact Information Section */}
+          <View style={styles.contactSection}>
+            <Text style={styles.contactMainTitle}>You can ask us questions !</Text>
+            
+            <View style={styles.contactCard}>
+              <View style={styles.contactItem}>
+                <Icon name="location-on" size={24} color="#27ae60" />
+                <View style={styles.contactTextContainer}>
+                  <Text style={styles.contactTitle}>Our Location!</Text>
+                  <Text style={styles.contactSubtext}>68 Neswilla Road Dehradun</Text>
+                </View>
+              </View>
+            </View>
+            
+            <Footer />
+          </View>
+        </ScrollView>
       </SafeAreaView>
     </View>
   );
@@ -428,19 +427,41 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  navbarWrapper: {
-    backgroundColor: '#ffffff',
-  },
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+  scrollViewContent: {
+    flexGrow: 1,
   },
-  formContainer: {
-    flex: 1,
-    paddingTop: 20,
+  heroSection: {
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  heroImage: {
+    resizeMode: 'cover',
+  },
+  heroOverlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 20,
+    borderRadius: 8,
+  },
+  heroTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  formSection: {
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  formTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    lineHeight: 28,
   },
   progressContainer: {
     flexDirection: 'row',
@@ -527,7 +548,7 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   summaryContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
     padding: 15,
     borderRadius: 8,
     marginTop: 20,
@@ -549,28 +570,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 20,
+    gap: 10,
   },
-  button: {
+  primaryButton: {
     backgroundColor: '#27ae60',
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 8,
     flex: 1,
-    marginLeft: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  previousButton: {
-    marginLeft: 0,
+  secondaryButton: {
+    backgroundColor: '#6c757d',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  nextButton: {
-    marginRight: 0,
+  fullWidthButton: {
+    flex: 1,
   },
-  buttonText: {
+  primaryButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  previousButtonText: {
+  secondaryButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
@@ -615,10 +644,6 @@ const styles = StyleSheet.create({
   contactSubtext: {
     fontSize: 14,
     color: '#666',
-  },
-  contactLink: {
-    color: '#27ae60',
-    textDecorationLine: 'underline',
   },
   disabledButton: {
     opacity: 0.7,
