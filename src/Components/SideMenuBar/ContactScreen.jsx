@@ -15,8 +15,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
-import { useDispatch, useSelector } from 'react-redux';
-import { submitContactForm } from '../../redux/actions/contactActions';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Navbar from '../Navbar/Navbar';
 import Footer from '../Footer/Footer';
@@ -25,9 +24,7 @@ const { width, height } = Dimensions.get('window');
 
 const MultiStepForm = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
-  const { loading, success, error } = useSelector(state => state.contact);
-  
+  const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     contact_name: '',
@@ -422,6 +419,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
+    backgroundColor: '#ffffff',
   },
   safeArea: {
     flex: 1,
@@ -572,7 +570,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     gap: 10,
   },
-  primaryButton: {
+  button: {
     backgroundColor: '#27ae60',
     paddingVertical: 15,
     paddingHorizontal: 30,
@@ -593,7 +591,10 @@ const styles = StyleSheet.create({
   fullWidthButton: {
     flex: 1,
   },
-  primaryButtonText: {
+  nextButton: {
+    marginRight: 0,
+  },
+  buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',

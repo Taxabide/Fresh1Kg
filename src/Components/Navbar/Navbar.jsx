@@ -86,7 +86,7 @@ const Navbar = ({ navigation }) => {
     if (isLoggedIn && userId) {
       dispatch(fetchCart(userId));
     }
-  }, [isLoggedIn, userId]);
+  }, [isLoggedIn, userId, dispatch]);
 
   // Get dynamic dimensions for responsive design
   const screenData = Dimensions.get('window');
@@ -163,6 +163,7 @@ const handleMenuItemPress = (item) => {
           title: 'About Us' 
         });
         break;
+        
         
       case 'Vegetables':
         navigation.navigate('ProductsScreen', {
@@ -306,7 +307,7 @@ const handleMenuItemPress = (item) => {
       <View style={styles.navbar}>
         {/* Logo Section */}
         <View style={styles.logoContainer}>
-          <Image 
+          <Image
             source={require('../../assets/images/logo.png')}
             style={styles.logo}
             resizeMode="contain"
@@ -315,7 +316,7 @@ const handleMenuItemPress = (item) => {
 
         {/* Right Icons Section */}
         <View style={styles.iconsContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.iconButton}
             onPress={() => {
               if (isLoggedIn) {
@@ -326,23 +327,23 @@ const handleMenuItemPress = (item) => {
             }}
             activeOpacity={0.7}
           >
-            <MaterialIcons 
-              name="person" 
+            <MaterialIcons
+              name="person"
               size={24}
               color={isLoggedIn ? "#7CB342" : "#333"}
             />
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.iconButton}
             onPress={handleCartPress}
             activeOpacity={0.7}
           >
             <View>
-              <MaterialIcons 
-                name="shopping-cart-checkout" 
+              <MaterialIcons
+                name="shopping-cart-checkout"
                 size={24}
-                color="#000" 
+                color="#000"
               />
               {cartItems && cartItems.length > 0 && (
                 <View style={styles.cartBadge}>
@@ -352,27 +353,27 @@ const handleMenuItemPress = (item) => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.iconButton}
             onPress={handleSearchPress}
             activeOpacity={0.7}
           >
-            <MaterialIcons 
-              name="search" 
+            <MaterialIcons
+              name="search"
               size={24}
-              color="#333" 
+              color="#333"
             />
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.iconButton}
             onPress={handleMenuPress}
             activeOpacity={0.7}
           >
-            <MaterialIcons 
-              name="menu" 
+            <MaterialIcons
+              name="menu"
               size={24}
-              color="#333" 
+              color="#333"
             />
           </TouchableOpacity>
         </View>

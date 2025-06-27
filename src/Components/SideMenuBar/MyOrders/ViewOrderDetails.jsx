@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,106 +12,123 @@ import {
   StatusBar,
   Dimensions,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchOrderDetails } from '../../../redux/actions/orderActions';
 
 const { width, height } = Dimensions.get('window');
 
 const ViewOrderDetails = ({ route, navigation }) => {
-  const { order } = route.params;
+  const { orderId, formattedOrderId } = route.params;
+  const dispatch = useDispatch();
+  
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const insets = useSafeAreaInsets();
+  
+  const { orderDetails, orderDetailsLoading, orderDetailsError } = useSelector(state => state.orders);
 
-  // Calculate dynamic header height based on device
+  useEffect(() => {
+    if (orderId) {
+      dispatch(fetchOrderDetails(orderId));
+    }
+  }, [dispatch, orderId]);
+  
+  const order = orderDetails; // Use a shorthand
+
   const getHeaderHeight = () => {
-    const baseHeight = 56; // Base header height
+    const baseHeight = 56;
     const statusBarHeight = Platform.OS === 'ios' ? insets.top : StatusBar.currentHeight || 0;
     return baseHeight + statusBarHeight;
   };
 
-  // Calculate dynamic padding based on device
   const getHeaderPadding = () => {
     return {
       paddingTop: Platform.OS === 'ios' ? insets.top : StatusBar.currentHeight || 0,
-      paddingHorizontal: width * 0.04, // 4% of screen width
+      paddingHorizontal: width * 0.04,
     };
   };
 
   const handleDownloadReceipt = () => {
-    // Format the order data properly before navigation
+    if (!order) return;
     const formattedOrder = {
-      serialNo: order.serialNo || '001',
-      orderId: order.orderId,
-      userName: order.userName,
-      userEmail: order.userEmail,
-      userPhone: order.userPhone,
-      address: order.address,
-      currentAddress: order.currentAddress,
-      addDate: order.addDate,
-      items: Array.isArray(order.items) ? order.items : [],
-      total: order.total || 0,
-      // Additional receipt data
-      invoiceNumber: `INV-${order.orderId}`,
-      orderDate: order.addDate,
-      paymentMethod: 'COD',
-      paymentStatus: 'PENDING',
-      shippingAddress: order.address,
-      billingAddress: order.currentAddress,
-      subtotal: order.total || 0,
-      tax: ((order.total || 0) * 0.18).toFixed(2),
+      orderId: formattedOrderId || order.order_id,
+      userName: order.user?.u_name,
+      userEmail: order.user?.u_email,
+      userPhone: order.user?.o_phone,
+      address: order.user?.o_address,
+      currentAddress: order.user?.o_current_address,
+      addDate: order.purchase_date,
+      items: order.items || [],
+      total: order.total,
+      invoiceNumber: `INV-${formattedOrderId || order.order_id}`,
+      orderDate: order.purchase_date,
+      paymentMethod: order.o_payment_method,
+      paymentStatus: order.o_payment_status,
+      shippingAddress: order.user?.o_address,
+      billingAddress: order.user?.o_current_address,
+      subtotal: order.total,
+      tax: (order.total * 0.18).toFixed(2), // Example tax
       shippingCharges: 0
     };
-
-    // Navigate with properly formatted data
-    navigation.navigate('Receipt', { 
-      order: formattedOrder
-    });
+    navigation.navigate('Receipt', { order: formattedOrder });
   };
 
-  const handleCancelOrder = () => {
-    setShowCancelModal(true);
-  };
+  const handleCancelOrder = () => setShowCancelModal(true);
 
   const handleSubmitCancel = () => {
     if (!cancelReason.trim()) {
       Alert.alert('Error', 'Please enter a reason for cancellation');
       return;
     }
-    // Here you would typically make an API call to cancel the order
-    console.log('Cancelling order:', order.orderId, 'Reason:', cancelReason);
+    console.log('Cancelling order:', order.order_id, 'Reason:', cancelReason);
     setShowCancelModal(false);
     setCancelReason('');
-    // After successful cancellation, you might want to:
-    // 1. Show success message
     Alert.alert('Success', 'Order cancelled successfully');
-    // 2. Update order status
-    // 3. Navigate back or refresh the order details
     navigation.goBack();
   };
 
-  const handleTrackOrder = () => {
-    navigation.navigate('TrackMyOrder', { order });
-  };
+  const handleTrackOrder = () => navigation.navigate('TrackMyOrder', { order });
+
+  if (orderDetailsLoading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#4CAF50" />
+        <Text style={styles.loadingText}>Loading Order Details...</Text>
+      </View>
+    );
+  }
+
+  if (orderDetailsError) {
+    return (
+      <View style={styles.centered}>
+        <MaterialIcons name="error-outline" size={60} color="#D32F2F" />
+        <Text style={styles.errorText}>{orderDetailsError}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={() => dispatch(fetchOrderDetails(orderId))}>
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!order) {
+    return (
+        <View style={styles.centered}>
+            <Text>No order details found.</Text>
+        </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <SafeAreaView style={styles.safeArea}>
-        {/* Header with dynamic height and padding */}
-        <View style={[
-          styles.header,
-          {
-            height: getHeaderHeight(),
-            ...getHeaderPadding(),
-          }
-        ]}>
+        <View style={[ styles.header, { height: getHeaderHeight(), ...getHeaderPadding() } ]}>
           <View style={styles.headerContent}>
-            <TouchableOpacity 
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
               <MaterialIcons name="arrow-back" size={22} color="#000" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Order Details</Text>
@@ -120,111 +137,87 @@ const ViewOrderDetails = ({ route, navigation }) => {
         </View>
 
         <ScrollView style={styles.scrollView}>
-          {/* Order ID Section */}
           <View style={[styles.section, { marginHorizontal: width * 0.04 }]}>
             <Text style={styles.orderIdLabel}>ORDER ID:</Text>
-            <Text style={styles.orderId}>{order.orderId}</Text>
+            <Text style={styles.orderId}>{formattedOrderId || order?.order_id}</Text>
           </View>
 
-          {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.downloadButton]}
-              onPress={handleDownloadReceipt}
-            >
+            <TouchableOpacity style={[styles.actionButton, styles.downloadButton]} onPress={handleDownloadReceipt}>
               <MaterialIcons name="download" size={18} color="#fff" />
               <Text style={styles.actionButtonText}>Download{'\n'}Receipt</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.orderCancelButton]}
-              onPress={handleCancelOrder}
-            >
+            <TouchableOpacity style={[styles.actionButton, styles.orderCancelButton]} onPress={handleCancelOrder}>
               <MaterialIcons name="cancel" size={18} color="#fff" />
               <Text style={styles.actionButtonText}>Cancel{'\n'}Order</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.trackButton]}
-              onPress={handleTrackOrder}
-            >
+            <TouchableOpacity style={[styles.actionButton, styles.trackButton]} onPress={handleTrackOrder}>
               <MaterialIcons name="location-on" size={18} color="#fff" />
               <Text style={styles.actionButtonText}>Track{'\n'}Order</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Order Details */}
           <View style={styles.detailsContainer}>
             <View style={styles.detailRow}>
               <Text style={styles.label}>Name:</Text>
-              <Text style={styles.value}>{order.userName}</Text>
+              <Text style={styles.value}>{order.user?.u_name}</Text>
             </View>
-
             <View style={styles.detailRow}>
               <Text style={styles.label}>Email:</Text>
-              <Text style={styles.value}>{order.userEmail}</Text>
+              <Text style={styles.value}>{order.user?.u_email}</Text>
             </View>
-
             <View style={styles.detailRow}>
               <Text style={styles.label}>Phone No.:</Text>
-              <Text style={styles.value}>{order.userPhone}</Text>
+              <Text style={styles.value}>{order.user?.o_phone}</Text>
             </View>
-
             <View style={styles.detailRow}>
               <Text style={styles.label}>Address:</Text>
-              <Text style={styles.value}>{order.address}</Text>
+              <Text style={styles.value}>{order.user?.o_address}</Text>
             </View>
-
             <View style={styles.detailRow}>
               <Text style={styles.label}>Current Address:</Text>
-              <Text style={styles.value}>{order.currentAddress}</Text>
+              <Text style={styles.value}>{order.user?.o_current_address}</Text>
             </View>
-
             <View style={styles.detailRow}>
               <Text style={styles.label}>Purchase Date:</Text>
-              <Text style={styles.value}>{order.addDate}</Text>
+              <Text style={styles.value}>{order.purchase_date}</Text>
             </View>
-
             <View style={styles.detailRow}>
               <Text style={styles.label}>Payment Method:</Text>
-              <Text style={styles.value}>COD</Text>
+              <Text style={styles.value}>{order.o_payment_method}</Text>
             </View>
-
             <View style={styles.detailRow}>
               <Text style={styles.label}>Payment Status:</Text>
-              <Text style={styles.value}>PENDING</Text>
+              <Text style={styles.value}>{order.o_payment_status}</Text>
             </View>
           </View>
 
-          {/* Order Items */}
           <View style={styles.orderItemsContainer}>
             <Text style={styles.sectionTitle}>Order Items:</Text>
-            {order.items.map((item, index) => (
-              <View key={index} style={styles.orderItem}>
-                <Text style={styles.productName}>Product Name:</Text>
-                <Text style={styles.itemName}>{item}</Text>
-                <View style={styles.itemDetails}>
-                  <View style={styles.itemDetail}>
-                    <Text style={styles.detailLabel}>MRP:</Text>
-                    <Text style={styles.detailValue}>₹{order.total}</Text>
-                  </View>
-                  <View style={styles.itemDetail}>
-                    <Text style={styles.detailLabel}>Weight:</Text>
-                    <Text style={styles.detailValue}>1 kg</Text>
-                  </View>
-                  <View style={styles.itemDetail}>
-                    <Text style={styles.detailLabel}>Quantity:</Text>
-                    <Text style={styles.detailValue}>1</Text>
-                  </View>
-                  <View style={styles.itemDetail}>
-                    <Text style={styles.detailLabel}>Subtotal:</Text>
-                    <Text style={styles.detailValue}>₹{order.total}</Text>
-                  </View>
-                </View>
-              </View>
-            ))}
+            {order.items && order.items.length > 0 ? (
+                order.items.map((item, index) => (
+                    <View key={index} style={styles.orderItem}>
+                        <Text style={styles.itemName}>{item.product_name}</Text>
+                        <View style={styles.itemDetails}>
+                        <View style={styles.itemDetail}>
+                            <Text style={styles.detailLabel}>Price:</Text>
+                            <Text style={styles.detailValue}>₹{item.o_i_price}</Text>
+                        </View>
+                        <View style={styles.itemDetail}>
+                            <Text style={styles.detailLabel}>Quantity:</Text>
+                            <Text style={styles.detailValue}>{item.o_i_quantity}</Text>
+                        </View>
+                        <View style={styles.itemDetail}>
+                            <Text style={styles.detailLabel}>Subtotal:</Text>
+                            <Text style={styles.detailValue}>₹{item.o_i_subtotal}</Text>
+                        </View>
+                        </View>
+                    </View>
+                ))
+            ) : (
+                <Text style={styles.itemName}>No items found for this order.</Text>
+            )}
 
-            {/* Total */}
             <View style={styles.totalSection}>
               <Text style={styles.totalLabel}>Total</Text>
               <Text style={styles.totalAmount}>₹{order.total}</Text>
@@ -232,43 +225,17 @@ const ViewOrderDetails = ({ route, navigation }) => {
           </View>
         </ScrollView>
 
-        {/* Cancel Order Modal */}
-        <Modal
-          visible={showCancelModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowCancelModal(false)}
-        >
+        <Modal visible={showCancelModal} transparent={true} animationType="fade" onRequestClose={() => setShowCancelModal(false)}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Cancel Order</Text>
               <Text style={styles.modalSubtitle}>Enter reason for cancellation</Text>
-              
-              <TextInput
-                style={styles.reasonInput}
-                placeholder="Type reason here..."
-                placeholderTextColor="#666"
-                value={cancelReason}
-                onChangeText={setCancelReason}
-                multiline={false}
-                maxLength={100}
-              />
-
+              <TextInput style={styles.reasonInput} placeholder="Type reason here..." placeholderTextColor="#666" value={cancelReason} onChangeText={setCancelReason} multiline={false} maxLength={100} />
               <View style={styles.modalButtons}>
-                <TouchableOpacity 
-                  style={[styles.modalButton, styles.submitButton]}
-                  onPress={handleSubmitCancel}
-                >
+                <TouchableOpacity style={[styles.modalButton, styles.submitButton]} onPress={handleSubmitCancel}>
                   <Text style={styles.modalButtonText}>Submit</Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={[styles.modalButton, styles.modalCancelButton]}
-                  onPress={() => {
-                    setShowCancelModal(false);
-                    setCancelReason('');
-                  }}
-                >
+                <TouchableOpacity style={[styles.modalButton, styles.modalCancelButton]} onPress={() => { setShowCancelModal(false); setCancelReason(''); }}>
                   <Text style={styles.modalButtonText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
@@ -281,6 +248,36 @@ const ViewOrderDetails = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#333',
+  },
+  errorText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#D32F2F',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+      backgroundColor: '#4CAF50',
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+  },
+  retryButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '600',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -304,12 +301,12 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   headerTitle: {
-    fontSize: Math.min(16, width * 0.045), // Responsive font size
+    fontSize: Math.min(16, width * 0.045),
     color: '#000',
     fontWeight: '500',
   },
   headerRight: {
-    width: 40, // To balance the header layout
+    width: 40,
   },
   scrollView: {
     flex: 1,
@@ -386,23 +383,22 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   orderItem: {
-    marginBottom: 20,
+    marginBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     paddingBottom: 16,
   },
-  productName: {
-    fontSize: 14,
-    color: '#4CAF50',
-    marginBottom: 8,
-  },
   itemName: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
     marginBottom: 12,
   },
   itemDetails: {
     marginTop: 8,
+    paddingLeft: 10,
+    borderLeftWidth: 2,
+    borderLeftColor: '#4CAF50'
   },
   itemDetail: {
     flexDirection: 'row',
@@ -411,30 +407,30 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: '#4CAF50',
+    color: '#555',
   },
   detailValue: {
     fontSize: 14,
-    color: '#666',
+    color: '#333',
+    fontWeight: '500',
   },
   totalSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 16,
     paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopWidth: 2,
+    borderTopColor: '#333',
   },
   totalLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   totalAmount: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#4CAF50',
   },
-  // Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

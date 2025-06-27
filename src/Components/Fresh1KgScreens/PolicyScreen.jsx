@@ -41,8 +41,8 @@ const PolicyScreen = () => {
     },
     {
       id: 3,
-      iconName: 'peanut',
-      iconType: 'MaterialCommunityIcons',
+      iconName: 'local-florist', // Flower/natural icon for dry fruits
+      iconType: 'MaterialIcons',
       title: 'Dry-Fruits',
       subtitle: 'Premium Nuts, Rich in Nutrition',
       backgroundColor: '#F3E5F5',

@@ -8,6 +8,7 @@ import SignInScreen from '../Components/auth/SignInScreen.jsx';
 import SignUpScreen from '../Components/auth/SignUpScreen.jsx';
 import ProfileScreen from '../Components/auth/ProfileScreen.jsx';
 import EditProfileScreen from '../Components/auth/EditProfileScreen.jsx';
+import PlaceOrderForm from '../Components/Navbar/PlaceOrdersForm';
 
 // Only import files that actually exist
 import ContactScreen from '../Components/SideMenuBar/ContactScreen';
@@ -49,6 +50,7 @@ const AppNavigator = () => {
       />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="CartMenu" component={CartMenu} />
+      <Stack.Screen name="PlaceOrderForm" component={PlaceOrderForm} />
       <Stack.Screen name="ContactScreen" component={ContactScreen} />
       <Stack.Screen name="MyOrdersScreen" component={MyOrdersScreen} />
       <Stack.Screen name="ViewOrderDetails" component={ViewOrderDetails} />

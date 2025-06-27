@@ -115,7 +115,7 @@ const FruitScreen = () => {
         >
           <Icon 
             name="heart" 
-            size={16} 
+            size={18} 
             color={addToWishlistLoading ? '#ccc' : '#ffffff'} 
           />
         </TouchableOpacity>
@@ -272,15 +272,15 @@ const styles = StyleSheet.create({
   productCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+    padding: 15,
+    marginHorizontal: 8,
+    marginBottom: 16,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     position: 'relative',
-    width: '100%',
   },
   promoSection: {
     padding: 12,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: 15,
     width: 28,
     height: 28,
@@ -371,9 +371,19 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     color: '#fff',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    color: '#ffffff',
+    marginBottom: 6,
+    letterSpacing: 0.2,
+  },
+  promoSubtitle: {
+    fontSize: 14,
+    lineHeight: 18,
+    color: '#ffffff',
+    opacity: 0.95,
+    letterSpacing: 0.1,
+    maxWidth: '95%',
   },
   promoCardContainer: {
     height: 190,
