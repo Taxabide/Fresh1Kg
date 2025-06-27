@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,91 +12,33 @@ import {
   Platform,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCart } from '../../../redux/actions/cartActions';
+import { fetchOrders } from '../../../redux/actions/orderActions';
 
 const { width, height } = Dimensions.get('window');
 
-const MyOrders = ({ navigation, route }) => {
-  const { userData } = route.params || {};
+const MyOrdersScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Get user login status and cart items from Redux store
   const isLoggedIn = useSelector(state => state.user.isLoggedIn);
   const userId = useSelector(state => state.user.user ? state.user.user.u_id : null);
   const cartItems = useSelector(state => state.cart.items);
-
-  // Updated dummy orders data with all requested fields
-  const [orders, setOrders] = useState([
-    {
-      id: '1',
-      serialNo: '001',
-      orderId: 'ORD-2024-001',
-      userName: 'Rahul Kumar',
-      userEmail: 'rahul.kumar@email.com',
-      userPhone: '+91 98765 43210',
-      address: '123 Main Street, Andheri East, Mumbai, Maharashtra - 400069',
-      currentAddress: '123 Main Street, Andheri East, Mumbai, Maharashtra - 400069',
-      phoneNumber: '+91 98765 43210',
-      addDate: '2024-01-15 14:30',
-      status: 'Delivered',
-      total: '345.50',
-      items: ['Fresh Apples 1kg', 'Bananas 2kg', 'Almonds 500g'],
-      itemCount: 3,
-      category: 'Mixed',
-      trackingId: 'TRK123456789',
-      message: 'Please deliver at the security gate'
-    },
-    {
-      id: '2',
-      serialNo: '002',
-      orderId: 'ORD-2024-002',
-      userName: 'Priya Singh',
-      userEmail: 'priya.singh@email.com',
-      userPhone: '+91 87654 32109',
-      address: '456 Park Avenue, Connaught Place, Delhi, New Delhi - 110001',
-      currentAddress: '456 Park Avenue, Connaught Place, Delhi, New Delhi - 110001',
-      phoneNumber: '+91 87654 32109',
-      addDate: '2024-01-10 11:45',
-      status: 'Out for Delivery',
-      total: '225.00',
-      items: ['Tomatoes 2kg', 'Onions 1kg'],
-      itemCount: 2,
-      category: 'Vegetables',
-      trackingId: 'TRK987654321',
-      message: 'Call before delivery'
-    },
-    {
-      id: '3',
-      serialNo: '003',
-      orderId: 'ORD-2024-003',
-      userName: 'Amit Patel',
-      userEmail: 'amit.patel@email.com',
-      userPhone: '+91 76543 21098',
-      address: '789 Garden Road, Koramangala, Bangalore, Karnataka - 560034',
-      currentAddress: '789 Garden Road, Koramangala, Bangalore, Karnataka - 560034',
-      phoneNumber: '+91 76543 21098',
-      addDate: '2024-01-05 09:15',
-      status: 'Processing',
-      total: '680.75',
-      items: ['Cashews 500g', 'Dates 1kg', 'Walnuts 250g'],
-      itemCount: 3,
-      category: 'Dry Fruits',
-      trackingId: 'TRK456789123',
-      message: 'Leave at doorstep if not available'
-    }
-  ]);
+  
+  const { orders, loading, error } = useSelector(state => state.orders);
 
   useEffect(() => {
     if (isLoggedIn && userId) {
+      dispatch(fetchOrders(userId));
       dispatch(fetchCart(userId));
     }
-  }, [isLoggedIn, userId]);
+  }, [isLoggedIn, userId, dispatch]);
 
   const handleCartPress = () => {
     if (!isLoggedIn || !userId) {
@@ -109,32 +51,37 @@ const MyOrders = ({ navigation, route }) => {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'Delivered':
+    const statusLower = status ? status.toLowerCase() : '';
+    switch (statusLower) {
+      case 'delivered':
         return '#28a745';
-      case 'Out for Delivery':
+      case 'out for delivery':
         return '#17a2b8';
-      case 'Processing':
+      case 'processing':
         return '#ffc107';
-      case 'Packed':
+      case 'packed':
         return '#6f42c1';
-      case 'Cancelled':
+      case 'cancelled':
         return '#dc3545';
+      case 'pending':
+        return '#FF9800'; 
       default:
         return '#6c757d';
     }
   };
 
-  // Filter orders based on search query - Move this outside of render
-  const getFilteredOrders = React.useMemo(() => {
-    return orders.filter(order => 
-    order.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.items.some(item => item.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    order.status.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  }, [searchQuery, orders]); // Only recompute when search query or orders change
+  const filteredOrders = useMemo(() => {
+    if (!orders) return [];
+    return orders.filter(order => {
+      const query = searchQuery.toLowerCase();
+      return (
+        order.o_order_id.toLowerCase().includes(query) ||
+        (order.o_payment_status && order.o_payment_status.toLowerCase().includes(query))
+      );
+    });
+  }, [searchQuery, orders]);
 
-  const renderEmptyState = React.useCallback(() => {
+  const renderEmptyState = useCallback(() => {
       return (
         <View style={styles.emptyState}>
           <MaterialIcons name="shopping-cart" size={80} color="#ccc" />
@@ -150,7 +97,7 @@ const MyOrders = ({ navigation, route }) => {
           {!searchQuery && (
             <TouchableOpacity 
               style={styles.shopNowButton}
-              onPress={() => navigation.navigate('Home')}
+              onPress={() => navigation.navigate('HomeScreen')}
               activeOpacity={0.8}
             >
               <Text style={styles.shopNowButtonText}>Shop Now</Text>
@@ -159,23 +106,26 @@ const MyOrders = ({ navigation, route }) => {
         </View>
       );
   }, [searchQuery, navigation]);
-
+  
   const handleViewDetails = (order) => {
-    navigation.navigate('ViewOrderDetails', { order });
+    navigation.navigate('ViewOrderDetails', { 
+      orderId: order.o_id,
+      formattedOrderId: order.o_order_id 
+    });
   };
 
   const openLocation = (order) => {
-    // Example coordinates - you would get these from your order data
-    const latitude = order.latitude || 30.3165; // Default coordinates if not provided
-    const longitude = order.longitude || 78.0322; // Default coordinates if not provided
+    const latitude = order.latitude;
+    const longitude = order.longitude;
+
+    if (!latitude || !longitude) {
+        Alert.alert("Location not available", "This order does not have location data.");
+        return;
+    }
     
-    const scheme = Platform.select({
-      ios: 'maps:',
-      android: 'geo:'
-    });
-    
+    const scheme = Platform.select({ ios: 'maps:', android: 'geo:' });
     const latLng = `${latitude},${longitude}`;
-    const label = `Order ${order.orderId} Location`;
+    const label = `Order ${order.o_order_id} Location`;
     const url = Platform.select({
       ios: `${scheme}${latLng}?q=${label}@${latLng}`,
       android: `${scheme}${latLng}?q=${latLng}(${label})`
@@ -185,25 +135,24 @@ const MyOrders = ({ navigation, route }) => {
       if (supported) {
         Linking.openURL(url);
       } else {
-        // Fallback to Google Maps web URL
         const webUrl = `https://www.google.com/maps/search/?api=1&query=${latLng}`;
         Linking.openURL(webUrl);
       }
     });
   };
 
-  const renderOrderItem = React.useCallback(({ item }) => (
+  const renderOrderItem = useCallback(({ item, index }) => (
     <View style={styles.orderCard}>
       <View style={styles.orderTable}>
         {/* Row 1: S.No, Order ID */}
         <View style={styles.tableRow}>
           <View style={styles.tableCell}>
             <Text style={styles.tableCellLabel}>S.No:</Text>
-            <Text style={styles.tableCellValue}>#{item.serialNo}</Text>
+            <Text style={styles.tableCellValue}>#{index + 1}</Text>
           </View>
           <View style={styles.tableCell}>
             <Text style={styles.tableCellLabel}>Order ID:</Text>
-            <Text style={styles.tableCellValue}>{item.orderId}</Text>
+            <Text style={styles.tableCellValue}>{item.o_order_id}</Text>
           </View>
         </View>
 
@@ -211,11 +160,11 @@ const MyOrders = ({ navigation, route }) => {
         <View style={styles.tableRow}>
           <View style={styles.tableCell}>
             <Text style={styles.tableCellLabel}>User Name:</Text>
-            <Text style={styles.tableCellValue}>{item.userName}</Text>
+            <Text style={styles.tableCellValue}>{item.u_name}</Text>
           </View>
           <View style={styles.tableCell}>
             <Text style={styles.tableCellLabel}>User Email:</Text>
-            <Text style={styles.tableCellValue}>{item.userEmail}</Text>
+            <Text style={styles.tableCellValue}>{item.u_email}</Text>
           </View>
         </View>
 
@@ -223,11 +172,11 @@ const MyOrders = ({ navigation, route }) => {
         <View style={styles.tableRow}>
           <View style={styles.tableCell}>
             <Text style={styles.tableCellLabel}>Phone Number:</Text>
-            <Text style={styles.tableCellValue}>{item.phoneNumber}</Text>
+            <Text style={styles.tableCellValue}>{item.o_phone}</Text>
           </View>
           <View style={styles.tableCell}>
             <Text style={styles.tableCellLabel}>Add Date:</Text>
-            <Text style={styles.tableCellValue}>{item.addDate}</Text>
+            <Text style={styles.tableCellValue}>{item.o_add_date}</Text>
           </View>
         </View>
 
@@ -235,7 +184,7 @@ const MyOrders = ({ navigation, route }) => {
         <View style={styles.tableRow}>
           <View style={[styles.tableCell, styles.fullWidthCell]}>
             <Text style={styles.tableCellLabel}>Address:</Text>
-            <Text style={styles.tableCellValue} numberOfLines={2}>{item.address}</Text>
+            <Text style={styles.tableCellValue} numberOfLines={2}>{item.o_address}</Text>
           </View>
         </View>
 
@@ -243,17 +192,29 @@ const MyOrders = ({ navigation, route }) => {
         <View style={styles.tableRow}>
           <View style={[styles.tableCell, styles.fullWidthCell]}>
             <Text style={styles.tableCellLabel}>Current Address:</Text>
-            <Text style={styles.tableCellValue} numberOfLines={2}>{item.currentAddress}</Text>
+            <Text style={styles.tableCellValue} numberOfLines={2}>{item.o_current_address}</Text>
           </View>
+        </View>
+        
+        {/* Row 6: Status */}
+        <View style={styles.tableRow}>
+            <View style={[styles.tableCell, {flex: 0, marginRight: 8}]}>
+                <Text style={styles.tableCellLabel}>Status:</Text>
+            </View>
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.o_payment_status) }]}>
+                 <Text style={styles.statusBadgeText}>{item.o_payment_status || 'N/A'}</Text>
+            </View>
         </View>
 
-        {/* Row 6: Message */}
-        <View style={styles.tableRow}>
-          <View style={[styles.tableCell, styles.fullWidthCell]}>
-            <Text style={styles.tableCellLabel}>Message:</Text>
-            <Text style={[styles.tableCellValue, styles.messageText]}>{item.message}</Text>
+        {/* Row 7: Message */}
+        {item.o_message ? (
+          <View style={styles.tableRow}>
+            <View style={[styles.tableCell, styles.fullWidthCell]}>
+              <Text style={styles.tableCellLabel}>Message:</Text>
+              <Text style={[styles.tableCellValue, styles.messageText]}>{item.o_message}</Text>
+            </View>
           </View>
-        </View>
+        ) : null}
 
         {/* Action Buttons */}
         <View style={styles.buttonContainer}>
@@ -265,7 +226,7 @@ const MyOrders = ({ navigation, route }) => {
             <Text style={styles.buttonText}>View Details</Text>
           </TouchableOpacity>
 
-          {item.status !== 'Delivered' && (
+          {(item.o_payment_status || '').toLowerCase() !== 'delivered' && (
             <TouchableOpacity 
               style={[styles.trackButton, { backgroundColor: '#FF9800' }]}
               onPress={() => openLocation(item)}
@@ -279,52 +240,56 @@ const MyOrders = ({ navigation, route }) => {
     </View>
   ), [handleViewDetails, openLocation]);
 
-  // Calculate dynamic header height based on device
   const getHeaderHeight = () => {
-    const baseHeight = 56; // Base header height
+    const baseHeight = 56;
     const statusBarHeight = Platform.OS === 'ios' ? insets.top : StatusBar.currentHeight || 0;
     return baseHeight + statusBarHeight;
   };
 
-  // Calculate dynamic padding based on device
   const getHeaderPadding = () => {
     return {
       paddingTop: Platform.OS === 'ios' ? insets.top : StatusBar.currentHeight || 0,
-      paddingHorizontal: width * 0.04, // 4% of screen width
+      paddingHorizontal: width * 0.04,
     };
   };
+  
+  if (loading) {
+    return (
+        <View style={styles.centered}>
+            <ActivityIndicator size="large" color="#4CAF50" />
+            <Text style={styles.loadingText}>Loading Orders...</Text>
+        </View>
+    );
+  }
+
+  if (error) {
+    return (
+        <View style={styles.centered}>
+            <MaterialIcons name="error-outline" size={60} color="#D32F2F" />
+            <Text style={styles.errorText}>Error: {error}</Text>
+            <TouchableOpacity 
+              style={styles.retryButton}
+              onPress={() => dispatch(fetchOrders(userId))}
+            >
+              <Text style={styles.retryButtonText}>Try Again</Text>
+            </TouchableOpacity>
+        </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <SafeAreaView style={styles.safeArea}>
-        {/* Header with dynamic height and padding */}
-        <View style={[
-          styles.header,
-          {
-            height: getHeaderHeight(),
-            ...getHeaderPadding(),
-          }
-        ]}>
+        <View style={[ styles.header, { height: getHeaderHeight(), ...getHeaderPadding() } ]}>
           <View style={styles.headerContent}>
-            <TouchableOpacity 
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} >
               <MaterialIcons name="arrow-back" size={22} color="#000" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>My Orders</Text>
-            <TouchableOpacity 
-              style={styles.cartButton}
-              onPress={handleCartPress}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.cartButton} onPress={handleCartPress} activeOpacity={0.7} >
               <View>
-                <MaterialIcons 
-                  name="shopping-cart-checkout" 
-                  size={24}
-                  color="#000" 
-                />
+                <MaterialIcons name="shopping-cart-checkout" size={24} color="#000" />
                 {cartItems && cartItems.length > 0 && (
                   <View style={styles.cartBadge}>
                     <Text style={styles.cartBadgeText}>{cartItems.length}</Text>
@@ -335,40 +300,31 @@ const MyOrders = ({ navigation, route }) => {
           </View>
         </View>
 
-        {/* Search Bar */}
         <View style={styles.searchContainer}>
           <View style={styles.searchInputContainer}>
           <MaterialIcons name="search" size={20} color="#666" />
           <TextInput
             style={styles.searchInput}
-              placeholder="Search orders by ID, items or status"
+              placeholder="Search by Order ID or Status"
             value={searchQuery}
             onChangeText={setSearchQuery}
               placeholderTextColor="#999"
             />
             {searchQuery !== '' && (
-              <TouchableOpacity
-                onPress={() => setSearchQuery('')}
-                style={styles.clearButton}
-              >
+              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton} >
                 <MaterialIcons name="close" size={20} color="#666" />
               </TouchableOpacity>
             )}
           </View>
         </View>
 
-        {/* Orders List */}
         <FlatList
-          data={getFilteredOrders}
+          data={filteredOrders}
           renderItem={renderOrderItem}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item.o_id.toString()}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={10}
-          windowSize={5}
-          initialNumToRender={5}
         />
       </SafeAreaView>
     </View>
@@ -376,6 +332,36 @@ const MyOrders = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#333',
+  },
+  errorText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#D32F2F',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+      backgroundColor: '#4CAF50',
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+  },
+  retryButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '600',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -424,48 +410,41 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    marginVertical: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 4,
-    height: Math.max(40, height * 0.05), // Responsive height
+    paddingHorizontal: width * 0.04,
+    paddingVertical: 10,
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    height: Math.max(44, height * 0.055), // Responsive height
   },
   searchInput: {
     flex: 1,
     marginLeft: 8,
     fontSize: Math.min(14, width * 0.035), // Responsive font size
     color: '#000',
-    padding: 0,
+    paddingVertical: 8,
   },
   clearButton: {
     padding: 8,
   },
   listContainer: {
-    paddingTop: 20,
     paddingHorizontal: width * 0.04,
     paddingBottom: 20,
   },
   orderCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 24,
+    padding: 16,
+    marginBottom: 16,
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { 
-      width: 0, 
-      height: 2 
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     borderWidth: 1,
     borderColor: '#f0f0f0',
   },
@@ -474,16 +453,18 @@ const styles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: 'row',
-    marginBottom: 8,
-    gap: width * 0.03,
-    paddingVertical: 2,
+    alignItems: 'center',
+    marginBottom: 10,
+    flexWrap: 'wrap',
   },
   tableCell: {
     flex: 1,
+    minWidth: '45%',
   },
   fullWidthCell: {
     flex: 1,
     width: '100%',
+    minWidth: '100%',
     backgroundColor: '#f8f9fa',
     padding: 8,
     borderRadius: 6,
@@ -491,7 +472,7 @@ const styles = StyleSheet.create({
   tableCellLabel: {
     fontSize: Math.min(12, width * 0.03),
     color: '#666',
-    marginBottom: 4,
+    marginBottom: 2,
     fontWeight: '600',
   },
   tableCellValue: {
@@ -499,50 +480,48 @@ const styles = StyleSheet.create({
     color: '#000',
     fontWeight: '400',
   },
+   statusBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  statusBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   messageText: {
     fontStyle: 'italic',
-    color: '#666',
-    backgroundColor: '#f8f9fa',
-    padding: 8,
-    borderRadius: 6,
-    marginTop: 4,
+    color: '#555',
   },
   buttonContainer: {
     flexDirection: 'row',
     gap: width * 0.03,
-    marginTop: 16,
-    justifyContent: 'flex-start',
+    marginTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
-    paddingTop: 16,
+    paddingTop: 12,
   },
   viewDetailsButton: {
     backgroundColor: '#4CAF50',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
   },
   trackButton: {
     backgroundColor: '#FF9800',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
   },
   buttonText: {
     color: '#fff',
@@ -554,9 +533,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: width * 0.08,
+    marginTop: height * 0.1,
   },
   emptyStateTitle: {
-    fontSize: Math.min(24, width * 0.06),
+    fontSize: Math.min(22, width * 0.055),
     fontWeight: 'bold',
     color: '#333',
     marginTop: 16,
@@ -564,17 +544,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emptyStateText: {
-    fontSize: Math.min(16, width * 0.04),
+    fontSize: Math.min(15, width * 0.038),
     color: '#666',
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 32,
+    lineHeight: 22,
+    marginBottom: 24,
   },
   shopNowButton: {
     backgroundColor: '#4CAF50',
     paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: 6,
+    borderRadius: 8,
+    elevation: 2,
   },
   shopNowButtonText: {
     color: '#fff',
@@ -583,4 +564,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MyOrders;
+export default MyOrdersScreen;

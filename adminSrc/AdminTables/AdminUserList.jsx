@@ -18,10 +18,72 @@ import AdminSidebar from '../AdminNavbar/AdminSidebar';
 const AdminUserList = () => {
   const [searchText, setSearchText] = useState('');
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(6);
   
-  const dispatch = useDispatch();
-  const { users, loading, error } = useSelector(state => state.adminUsers);
+  // Sample data - Replace with API call
+  const sampleUsers = [
+    {
+      id: 1,
+      name: 'Gaurav',
+      email: 'ggaur281@gmail.com',
+      number: '7457010522',
+      addDate: '12-Jun-2025',
+      address: '',
+      pincode: '',
+      profilePhoto: null
+    },
+    {
+      id: 2,
+      name: 'Test User',
+      email: 'test@gmail.com',
+      number: '123456789',
+      addDate: '12-Jun-2025',
+      address: '',
+      pincode: '',
+      profilePhoto: null
+    },
+    {
+      id: 3,
+      name: 'Gaurav Sharma',
+      email: 'gaurav@gmail.com',
+      number: '9927045632',
+      addDate: '10-Jun-2025',
+      address: '',
+      pincode: '0',
+      profilePhoto: null
+    },
+    {
+      id: 4,
+      name: 'Vivek',
+      email: 'vivek@gmail.com',
+      number: '9978678789',
+      addDate: '10-Jun-2025',
+      address: '',
+      pincode: '2563989',
+      profilePhoto: null
+    },
+    {
+      id: 5,
+      name: 'Ajay Chauhan',
+      email: 'ajaychauhanuk07@gmail.com',
+      number: '9193555830',
+      addDate: '30-May-2025',
+      address: '',
+      pincode: '',
+      profilePhoto: null
+    },
+    {
+      id: 6,
+      name: 'Aman',
+      email: 'aman@gmail.com',
+      number: '2222222222',
+      addDate: '10-May-2025',
+      address: 'dun',
+      pincode: '248002',
+      profilePhoto: null
+    }
+  ];
 
   useEffect(() => {
     dispatch(fetchAdminUsers());
@@ -172,11 +234,18 @@ const AdminUserList = () => {
                     </View>
                   ) : (
                     <View style={styles.tableBody}>
-                      {filteredUsers.map((item) => (
-                        <View key={item.u_id.toString()}>
-                          {renderUserRow({ item })}
-                        </View>
-                      ))}
+                      {filteredUsers.length > 0 ? 
+                        filteredUsers.map((item) => (
+                          <View key={item.u_id.toString()}>
+                            {renderUserRow({ item })}
+                          </View>
+                        )) : 
+                        currentUsers.map((item) => (
+                          <View key={item.id.toString()}>
+                            {renderUserRow({ item })}
+                          </View>
+                        ))
+                      }
                     </View>
                   )}
                 </View>
@@ -221,7 +290,7 @@ const AdminUserList = () => {
               <View style={styles.bottomSection}>
                 <View style={styles.entriesInfo}>
                   <Text style={styles.entriesText}>
-                    Showing 1 to {Math.min(filteredUsers.length, users.length)} of {users.length} entries
+                    Showing {indexOfFirstUser + 1} to {Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} entries
                   </Text>
                 </View>
                 
@@ -539,20 +608,58 @@ const styles = StyleSheet.create({
     color: '#28a745',
     fontWeight: '600',
   },
-  sortableHeader: {
+  paginationContainer: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    marginTop: 20,
+    marginBottom: 20,
+    gap: 10,
   },
-  headerText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#495057',
+  pageNumbers: {
+    flexDirection: 'row',
+    gap: 5,
   },
-  sortIcon: {
-    marginLeft: 5,
+  paginationButton: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    backgroundColor: '#4CAF50',
+    borderRadius: 5,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  paginationButtonDisabled: {
+    backgroundColor: '#e0e0e0',
+  },
+  paginationButtonText: {
+    color: '#fff',
     fontSize: 14,
-    color: '#495057',
+    fontWeight: '500',
+  },
+  paginationButtonTextDisabled: {
+    color: '#999',
+  },
+  pageNumberButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    minWidth: 40,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  pageNumberButtonActive: {
+    backgroundColor: '#4CAF50',
+    borderColor: '#4CAF50',
+  },
+  pageNumberText: {
+    color: '#666',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  pageNumberTextActive: {
+    color: '#fff',
   },
 });
 
