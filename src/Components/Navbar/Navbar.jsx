@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -14,32 +14,79 @@ import {
   ScrollView,
   Alert,
   Platform,
+  PixelRatio,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import CartMenu from '../../Components/Navbar/CartMenu.jsx';
+import CartMenu from './CartMenu.jsx';
 import { useSelector, useDispatch } from 'react-redux';
 import { searchProducts } from '../../redux/actions/productActions';
 import { fetchWishlist } from '../../redux/actions/wishlistActions';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { fetchCart } from '../../redux/actions/cartActions';
 
+// Get screen dimensions
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
-const { width, height } = Dimensions.get('window');
+// Scale factors based on design width (assuming 375 is base width)
+const scale = SCREEN_WIDTH / 375;
+const verticalScale = SCREEN_HEIGHT / 812; // assuming 812 is base height (iPhone X)
+
+// Normalize sizing based on scale factor
+const normalize = (size) => {
+  const newSize = size * scale;
+  if (Platform.OS === 'ios') {
+    return Math.round(PixelRatio.roundToNearestPixel(newSize));
+  }
+  return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
+};
+
+// Screen size breakpoints
+const SCREEN = {
+  width: SCREEN_WIDTH,
+  height: SCREEN_HEIGHT,
+  isSmall: SCREEN_WIDTH < 360,
+  isMedium: SCREEN_WIDTH >= 360 && SCREEN_WIDTH < 400,
+  isLarge: SCREEN_WIDTH >= 400 && SCREEN_WIDTH < 600,
+  isTablet: SCREEN_WIDTH >= 600,
+  scale: scale,
+  verticalScale: verticalScale
+};
+
+// Dynamic navbar height based on screen size
+const NAVBAR_HEIGHT = Platform.select({
+  ios: normalize(44),
+  android: normalize(56),
+  default: normalize(50)
+});
+
+// Dynamic icon sizes
+const ICON_SIZE = {
+  small: normalize(20),
+  medium: normalize(24),
+  large: normalize(28)
+};
 
 const Navbar = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch();
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const [slideAnim] = useState(new Animated.Value(width * 0.8));
-  const [activeTab, setActiveTab] = useState('Menu');
+  const [slideAnim] = useState(new Animated.Value(SCREEN.width * 0.8));
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedCategories, setExpandedCategories] = useState({});
 
-  // Get user login status from Redux store
+  // Get user login status and cart items from Redux store
   const isLoggedIn = useSelector(state => state.user.isLoggedIn);
   const userId = useSelector(state => state.user.user ? state.user.user.u_id : null);
   const wishlistItems = useSelector(state => state.wishlistData.items);
+  const cartItems = useSelector(state => state.cart.items);
+
+  useEffect(() => {
+    if (isLoggedIn && userId) {
+      dispatch(fetchCart(userId));
+    }
+  }, [isLoggedIn, userId, dispatch]);
 
   // Get dynamic dimensions for responsive design
   const screenData = Dimensions.get('window');
@@ -87,7 +134,7 @@ const Navbar = ({ navigation }) => {
 
   const closeMenu = () => {
     Animated.timing(slideAnim, {
-      toValue: width * 0.8,
+      toValue: SCREEN.width * 0.8,
       duration: 300,
       useNativeDriver: true,
     }).start(() => {
@@ -101,12 +148,23 @@ const handleMenuItemPress = (item) => {
       case 'Home':
         navigation.navigate('HomeScreen');
         break;
+      case 'My Orders':
+        if (!isLoggedIn || !userId) {
+          Alert.alert('Login Required', 'Please log in to view your orders.', [
+            { text: 'OK', onPress: () => navigation.navigate('SignInScreen') },
+          ]);
+          return;
+        }
+        navigation.navigate('MyOrdersScreen');
+        break;
       case 'About':
         navigation.navigate('ProductsScreen', { 
           category: 'about',
           title: 'About Us' 
         });
         break;
+        
+        
       case 'Vegetables':
         navigation.navigate('ProductsScreen', {
           categoryId: 2,
@@ -134,6 +192,9 @@ const handleMenuItemPress = (item) => {
       case 'Contact Us':
         navigation.navigate('ContactScreen');
         break;
+      case 'Wishlist':
+        navigation.navigate('WishlistScreen');
+        break;
       default:
         Alert.alert(
           'Notice',
@@ -147,49 +208,6 @@ const handleMenuItemPress = (item) => {
   closeMenu();
 };
 
-  const handleCategoryPress = (categoryName, subcategory = null) => {
-    if (navigation) {
-      switch(categoryName) {
-        case 'Breakfast & Dairy':
-          navigation.navigate('BreakfastDairy', { subcategory });
-          break;
-        case 'Meats & Seafood':
-          navigation.navigate('MeatsSeafood', { subcategory });
-          break;
-        case 'Breads & Bakery':
-          navigation.navigate('BreadsBakery');
-          break;
-        case 'Chips & Snacks':
-          navigation.navigate('ChipsSnacks', { subcategory });
-          break;
-        case 'Medical Healthcare':
-          navigation.navigate('MedicalHealthcare');
-          break;
-        case 'Biscuits & Snacks':
-          navigation.navigate('BiscuitsSnacks', { subcategory });
-          break;
-        case 'Frozen Foods':
-          navigation.navigate('FrozenFoods');
-          break;
-        case 'Grocery & Staples':
-          navigation.navigate('GroceryStaples');
-          break;
-        case 'Other Items':
-          navigation.navigate('OtherItems');
-          break;
-        default:
-          Alert.alert(
-            'Notice',
-            `${categoryName} category is not available yet.`,
-            [{ text: 'OK' }]
-          );
-          break;
-      }
-    }
-    
-    closeMenu();
-  };
-
   const handleSearch = () => {
     if (searchQuery.trim() && navigation) {
       dispatch(searchProducts(searchQuery));
@@ -199,296 +217,167 @@ const handleMenuItemPress = (item) => {
     closeSearchModal();
   };
 
-  const toggleCategory = (categoryId) => {
-    setExpandedCategories(prevState => ({
-      ...prevState,
-      [categoryId]: !prevState[categoryId]
-    }));
-  };
-
-  const categoryItems = [
-    { 
-      id: 1, 
-      name: 'Breakfast & Dairy', 
-      icon: 'local-cafe', 
-      hasSubmenu: true,
-      subcategories: ['Breakfast', 'Dinner', 'Pumpkin']
-    },
-    { 
-      id: 2, 
-      name: 'Meats & Seafood', 
-      icon: 'restaurant', 
-      hasSubmenu: true,
-      subcategories: ['Fresh Meat', 'Seafood', 'Frozen Items']
-    },
-    { 
-      id: 3, 
-      name: 'Breads & Bakery', 
-      icon: 'bakery-dining', 
-      hasSubmenu: false,
-      subcategories: []
-    },
-    { 
-      id: 4, 
-      name: 'Chips & Snacks', 
-      icon: 'cookie', 
-      hasSubmenu: true,
-      subcategories: ['Chips', 'Cookies', 'Nuts', 'Crackers']
-    },
-    { 
-      id: 5, 
-      name: 'Medical Healthcare', 
-      icon: 'medical-services', 
-      hasSubmenu: false,
-      subcategories: []
-    },
-    { 
-      id: 6, 
-      name: 'Biscuits & Snacks', 
-      icon: 'cookie', 
-      hasSubmenu: true,
-      subcategories: ['Biscuits', 'Wafers', 'Health Snacks']
-    },
-    { 
-      id: 7, 
-      name: 'Frozen Foods', 
-      icon: 'ac-unit', 
-      hasSubmenu: false,
-      subcategories: []
-    },
-    { 
-      id: 8, 
-      name: 'Grocery & Staples', 
-      icon: 'shopping-basket', 
-      hasSubmenu: false,
-      subcategories: []
-    },
-    { 
-      id: 9, 
-      name: 'Other Items', 
-      icon: 'more-horiz', 
-      hasSubmenu: false,
-      subcategories: []
-    },
-  ];
-
   const renderMenuContent = () => {
-    if (activeTab === 'Menu') {
-      return (
-        <ScrollView style={styles.menuContent} showsVerticalScrollIndicator={false}>
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => handleMenuItemPress('Home')}
-          >
-            <Text style={styles.menuItemText}>Home</Text>
-          </TouchableOpacity>
+    return (
+      <ScrollView style={styles.menuContent} showsVerticalScrollIndicator={false}>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => handleMenuItemPress('Home')}
+        >
+          <Text style={styles.menuItemText}>Home</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => handleMenuItemPress('About')}
-          >
-            <Text style={styles.menuItemText}>About</Text>
-          </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => handleMenuItemPress('My Orders')}
+        >
+          <Text style={styles.menuItemText}>My Orders</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => handleMenuItemPress('Vegetables')}
-          >
-            <Text style={styles.menuItemText}>Vegetables</Text>
-          </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => handleMenuItemPress('About')}
+        >
+          <Text style={styles.menuItemText}>About</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => handleMenuItemPress('Fruits')}
-          >
-            <Text style={styles.menuItemText}>Fruits</Text>
-          </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => handleMenuItemPress('Vegetables')}
+        >
+          <Text style={styles.menuItemText}>Vegetables</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => handleMenuItemPress('Dry Fruits')}
-          >
-            <Text style={styles.menuItemText}>Dry Fruits</Text>
-          </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => handleMenuItemPress('Fruits')}
+        >
+          <Text style={styles.menuItemText}>Fruits</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => handleMenuItemPress('Contact Us')}
-          >
-            <Text style={styles.menuItemText}>Contact Us</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      );
-    } else {
-      return (
-        <ScrollView style={styles.menuContent} showsVerticalScrollIndicator={false}>
-          {categoryItems.map((category) => (
-            <View key={category.id}>
-              <TouchableOpacity 
-                style={[
-                  styles.categoryItem,
-                  expandedCategories[category.id] && styles.expandedCategoryItem
-                ]}
-                onPress={() => {
-                  if (category.hasSubmenu) {
-                    toggleCategory(category.id);
-                  } else {
-                    handleCategoryPress(category.name);
-                  }
-                }}
-              >
-                <View style={styles.categoryLeft}>
-                  <MaterialIcons 
-                    name={category.icon} 
-                    size={isSmallScreen ? 20 : 24} 
-                    color="#666" 
-                    style={styles.categoryIcon}
-                  />
-                  <Text style={[
-                    styles.categoryItemText,
-                    { fontSize: isSmallScreen ? 16 : 18 }
-                  ]}>
-                    {category.name}
-                  </Text>
-                </View>
-                {category.hasSubmenu && (
-                  <TouchableOpacity
-                    style={styles.expandButton}
-                    onPress={() => toggleCategory(category.id)}
-                  >
-                    <MaterialIcons 
-                      name={expandedCategories[category.id] ? "remove" : "add"} 
-                      size={isSmallScreen ? 20 : 24} 
-                      color="#7CB342" 
-                    />
-                  </TouchableOpacity>
-                )}
-              </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => handleMenuItemPress('Dry Fruits')}
+        >
+          <Text style={styles.menuItemText}>Dry Fruits</Text>
+        </TouchableOpacity>
 
-              {category.hasSubmenu && expandedCategories[category.id] && (
-                <View style={styles.subcategoriesContainer}>
-                  {category.subcategories.map((subcategory, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.subcategoryItem}
-                      onPress={() => handleCategoryPress(category.name, subcategory)}
-                    >
-                      <MaterialIcons 
-                        name="chevron-right" 
-                        size={16} 
-                        color="#999" 
-                        style={styles.subcategoryIcon}
-                      />
-                      <Text style={[
-                        styles.subcategoryText,
-                        { fontSize: isSmallScreen ? 14 : 16 }
-                      ]}>
-                        {subcategory}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => handleMenuItemPress('Contact Us')}
+        >
+          <Text style={styles.menuItemText}>Contact Us</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => handleMenuItemPress('Wishlist')}
+        >
+          <Text style={styles.menuItemText}>Wishlist</Text>
+        </TouchableOpacity>
+
+        <View style={[styles.bottomSection, { marginTop: 10 }]}>
+          <View style={styles.contactInfo}>
+            <View style={styles.contactRow}>
+              <MaterialIcons name="headset-mic" size={16} color="#7CB342" />
+              <Text style={[
+                styles.contactText,
+                { fontSize: isSmallScreen ? 12 : 14 }
+              ]}>
+                02345697871
+              </Text>
             </View>
-          ))}
-        </ScrollView>
-      );
-    }
-  };
-
-  return (
-    <>
-      {/* StatusBar - positioned at the very top */}
-      <StatusBar 
-        barStyle="dark-content" 
-        backgroundColor="#ffffff"
-        translucent={false}
-      />
-      
-      {/* Main Navbar Container - positioned right after status bar */}
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.navbarContainer}>
-          <View style={styles.navbar}>
-            {/* Logo Section */}
-            <View style={styles.logoContainer}>
-              <Image 
-                source={require('../../assets/images/logo.png')}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </View>
-
-            {/* Right Icons Section */}
-            <View style={styles.iconsContainer}>
-              <TouchableOpacity 
-                style={styles.iconButton}
-                onPress={() => {
-                  if (isLoggedIn) {
-                    navigation.navigate('ProfileScreen');
-                  } else {
-                    navigation.navigate('SignInScreen');
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons 
-                  name="person" 
-                  size={24} 
-                  color={isLoggedIn ? "#7CB342" : "#333"}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={handleWishlistPress}
-                activeOpacity={0.7}
-              >
-                <FontAwesome
-                  name="heart"
-                  size={isSmallScreen ? 22 : isTablet ? 32 : 28}
-                  color="#333"
-                />
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.iconButton}
-                onPress={handleCartPress}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons 
-                  name="shopping-cart" 
-                  size={isSmallScreen ? 22 : isTablet ? 32 : 28} 
-                  color="#333" 
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.iconButton}
-                onPress={handleSearchPress}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons 
-                  name="search" 
-                  size={isSmallScreen ? 22 : isTablet ? 32 : 28} 
-                  color="#333" 
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.iconButton}
-                onPress={handleMenuPress}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons 
-                  name="menu" 
-                  size={isSmallScreen ? 22 : isTablet ? 32 : 28} 
-                  color="#333" 
-                />
-              </TouchableOpacity>
+            <View style={styles.contactRow}>
+              <MaterialIcons name="email" size={16} color="#7CB342" />
+              <Text style={[
+                styles.contactText,
+                { fontSize: isSmallScreen ? 12 : 14 }
+              ]}>
+                info@example.com
+              </Text>
             </View>
           </View>
         </View>
-      </SafeAreaView>
+      </ScrollView>
+    );
+  };
+
+  return (
+    <View style={styles.navbarContainer}>
+      <View style={styles.navbar}>
+        {/* Logo Section */}
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../../assets/images/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+
+        {/* Right Icons Section */}
+        <View style={styles.iconsContainer}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => {
+              if (isLoggedIn) {
+                navigation.navigate('ProfileScreen');
+              } else {
+                navigation.navigate('SignInScreen');
+              }
+            }}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons
+              name="person"
+              size={24}
+              color={isLoggedIn ? "#7CB342" : "#333"}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={handleCartPress}
+            activeOpacity={0.7}
+          >
+            <View>
+              <MaterialIcons
+                name="shopping-cart-checkout"
+                size={24}
+                color="#000"
+              />
+              {cartItems && cartItems.length > 0 && (
+                <View style={styles.cartBadge}>
+                  <Text style={styles.cartBadgeText}>{cartItems.length}</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={handleSearchPress}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons
+              name="search"
+              size={24}
+              color="#333"
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={handleMenuPress}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons
+              name="menu"
+              size={24}
+              color="#333"
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {/* Search Modal */}
       <Modal
@@ -577,190 +466,120 @@ const handleMenuItemPress = (item) => {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.tabContainer}>
-              <TouchableOpacity 
-                style={[
-                  styles.tabButton, 
-                  activeTab === 'Menu' && styles.activeTab
-                ]}
-                onPress={() => setActiveTab('Menu')}
-              >
-                <Text style={[
-                  styles.tabText,
-                  activeTab === 'Menu' && styles.activeTabText,
-                  { fontSize: isSmallScreen ? 14 : 16 }
-                ]}>
-                  Menu
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[
-                  styles.tabButton, 
-                  activeTab === 'Category' && styles.activeTab
-                ]}
-                onPress={() => setActiveTab('Category')}
-              >
-                <Text style={[
-                  styles.tabText,
-                  activeTab === 'Category' && styles.activeTabText,
-                  { fontSize: isSmallScreen ? 14 : 16 }
-                ]}>
-                  Category
-                </Text>
-              </TouchableOpacity>
-            </View>
-
             <View style={styles.contentContainer}>
               {renderMenuContent()}
-            </View>
-
-            <View style={styles.bottomSection}>
-              <View style={styles.contactInfo}>
-                <View style={styles.contactRow}>
-                  <MaterialIcons name="headset-mic" size={16} color="#7CB342" />
-                  <Text style={[
-                    styles.contactText,
-                    { fontSize: isSmallScreen ? 12 : 14 }
-                  ]}>
-                    02345697871
-                  </Text>
-                </View>
-                <View style={styles.contactRow}>
-                  <MaterialIcons name="email" size={16} color="#7CB342" />
-                  <Text style={[
-                    styles.contactText,
-                    { fontSize: isSmallScreen ? 12 : 14 }
-                  ]}>
-                    info@example.com
-                  </Text>
-                </View>
-              </View>
             </View>
           </Animated.View>
         </View>
       </Modal>
-    </>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  // Fixed SafeAreaView for proper positioning
-  safeArea: {
-    backgroundColor: '#ffffff',
-  },
-  // Clean navbar container - no extra padding
   navbarContainer: {
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: {
-          width: 0,
-          height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3.84,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    borderBottomColor: '#eee',
   },
-navbar: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  paddingHorizontal: width < 375 ? 16 : 22, // 14→16, 18→22
-  paddingVertical: width < 375 ? 12 : 15,   // 10→12, 12→15
-  backgroundColor: '#ffffff',
-  height: width < 375 ? 70 : width >= 768 ? 80 : 75, // 60→70, 65→75, 70→80
-},
+  navbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: normalize(16),
+    height: NAVBAR_HEIGHT,
+    backgroundColor: '#ffffff',
+  },
   logoContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'flex-start',
+    width: SCREEN.isTablet ? '20%' : '25%',
   },
-logo: {
-  width: width < 375 ? 80 : width >= 768 ? 120 : 100,   // 80→100→120
-  height: width < 375 ? 64 : width >= 768 ? 96 : 80,    // 64→80→96
-},
+  logo: {
+    width: SCREEN.isSmall 
+      ? normalize(70) 
+      : SCREEN.isTablet 
+      ? normalize(100) 
+      : normalize(85),
+    height: SCREEN.isSmall 
+      ? normalize(35) 
+      : SCREEN.isTablet 
+      ? normalize(50) 
+      : normalize(42.5),
+    resizeMode: 'contain',
+  },
   iconsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
+    flex: 1,
+    gap: normalize(SCREEN.isSmall ? 8 : 12),
   },
   iconButton: {
-  padding: width < 375 ? 10 : 12,                    // 8→10, 10→12
-  marginLeft: width < 375 ? 10 : 12,                 // 6→10, 8→12
-  borderRadius: 20,
-  backgroundColor: 'rgba(0,0,0,0.05)',
-  minWidth: width < 375 ? 44 : 48,                   // 40→44, 44→48
-  minHeight: width < 375 ? 44 : 48,                  // 40→44, 44→48
-  justifyContent: 'center',
-  alignItems: 'center',
-},
+    padding: normalize(8),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   overlayTouchable: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  // Search Modal Styles
   searchModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.8)',
     justifyContent: 'flex-start',
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingTop: Platform.OS === 'ios' ? normalize(60) : normalize(40),
   },
   searchModalContent: {
     backgroundColor: '#ffffff',
-    margin: 20,
-    borderRadius: 8,
-    padding: 20,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    margin: normalize(20),
+    borderRadius: normalize(8),
+    padding: normalize(20),
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: normalize(4),
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
   },
   searchCloseButton: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    padding: 5,
+    top: normalize(12),
+    right: normalize(12),
+    padding: normalize(4),
     zIndex: 1,
   },
   searchInputSection: {
-    marginTop: 30,
-    marginBottom: 20,
+    marginTop: normalize(30),
+    marginBottom: normalize(20),
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    borderRadius: 4,
+    borderRadius: normalize(4),
     backgroundColor: '#f9f9f9',
   },
   searchModalInput: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 14,
+    paddingHorizontal: normalize(16),
+    paddingVertical: normalize(12),
+    fontSize: normalize(SCREEN.isSmall ? 14 : 16),
     color: '#333',
   },
   searchSubmitButton: {
     backgroundColor: '#7CB342',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopRightRadius: 4,
-    borderBottomRightRadius: 4,
+    paddingHorizontal: normalize(16),
+    paddingVertical: normalize(12),
+    borderTopRightRadius: normalize(4),
+    borderBottomRightRadius: normalize(4),
   },
-  // Modal Overlay
   modalOverlay: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -768,69 +587,126 @@ logo: {
     justifyContent: 'flex-end',
   },
   sidebar: {
-    width: width >= 768 ? width * 0.4 : width * 0.8,
-    height: height,
+    width: SCREEN.isTablet ? SCREEN.width * 0.4 : SCREEN.width * 0.8,
+    height: '100%',
     backgroundColor: '#ffffff',
-    paddingTop: Platform.OS === 'ios' ? 50 : 30,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: -2,
-      height: 0,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    paddingTop: Platform.OS === 'ios' ? normalize(50) : normalize(30),
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: -2, height: 0 },
+        shadowOpacity: 0.25,
+        shadowRadius: normalize(4),
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
   },
   closeButton: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 50 : 30,
-    left: 22,
+    top: Platform.OS === 'ios' ? normalize(50) : normalize(30),
+    left: normalize(22),
     zIndex: 1,
   },
   closeButtonContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 4,
+    width: normalize(36),
+    height: normalize(36),
+    borderRadius: normalize(4),
     backgroundColor: '#7CB342',
     justifyContent: 'center',
     alignItems: 'center',
   },
   searchContainer: {
-    marginHorizontal: 20,
-    marginTop: 60,
-    marginBottom: 20,
+    marginHorizontal: normalize(20),
+    marginTop: normalize(60),
+    marginBottom: normalize(20),
     position: 'relative',
   },
   searchInput: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    borderRadius: 4,
-    paddingHorizontal: 16,
-    paddingRight: 40,
-    paddingVertical: 12,
-    fontSize: 16,
+    borderRadius: normalize(4),
+    paddingHorizontal: normalize(16),
+    paddingRight: normalize(40),
+    paddingVertical: normalize(12),
+    fontSize: normalize(16),
     color: '#333',
     backgroundColor: '#ffffff',
   },
   searchIconContainer: {
     position: 'absolute',
-    right: 12,
-    top: 12,
+    right: normalize(12),
+    top: normalize(12),
   },
   searchIcon: {
-    // No position or offset needed here, as it's handled by searchIconContainer
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: normalize(20),
+  },
+  menuContent: {
+    flex: 1,
+  },
+  menuItem: {
+    paddingVertical: normalize(16),
+    paddingHorizontal: normalize(16),
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  menuItemText: {
+    fontSize: normalize(SCREEN.isSmall ? 14 : 16),
+    color: '#666',
+  },
+  bottomSection: {
+    paddingHorizontal: normalize(16),
+    paddingBottom: normalize(24),
+    paddingTop: normalize(16),
+  },
+  contactInfo: {
+    backgroundColor: '#f8f8f8',
+    padding: normalize(16),
+    borderRadius: normalize(8),
+    marginBottom: normalize(16),
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: normalize(8),
+  },
+  contactText: {
+    marginLeft: normalize(8),
+    color: '#333',
+    fontSize: normalize(SCREEN.isSmall ? 12 : 14),
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: normalize(-4),
+    right: normalize(-4),
+    backgroundColor: '#ff6f00',
+    borderRadius: normalize(8),
+    minWidth: normalize(16),
+    height: normalize(16),
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: normalize(4),
+  },
+  cartBadgeText: {
+    color: '#fff',
+    fontSize: normalize(10),
+    fontWeight: 'bold',
   },
   tabContainer: {
     flexDirection: 'row',
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 4,
+    marginHorizontal: normalize(20),
+    marginBottom: normalize(20),
+    borderRadius: normalize(4),
     overflow: 'hidden',
   },
   tabButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: normalize(12),
+    paddingHorizontal: normalize(16),
     backgroundColor: '#f5f5f5',
     alignItems: 'center',
     justifyContent: 'center',
@@ -839,93 +715,12 @@ logo: {
     backgroundColor: '#7CB342',
   },
   tabText: {
+    fontSize: normalize(SCREEN.isSmall ? 14 : 16),
     fontWeight: 'bold',
     color: '#333',
   },
   activeTabText: {
     color: '#ffffff',
-  },
-  contentContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  menuContent: {
-    flex: 1,
-  },
-  menuItem: {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  menuItemText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  categoryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  categoryLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  categoryIcon: {
-    marginRight: 12,
-  },
-  categoryItemText: {
-    color: '#333',
-    flex: 1,
-  },
-  bottomSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-    paddingTop: 10,
-  },
-  contactInfo: {
-    backgroundColor: '#f8f8f8',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  contactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  contactText: {
-    marginLeft: 8,
-    color: '#333',
-  },
-  expandedCategoryItem: {
-    backgroundColor: '#f0f8e8',
-  },
-  expandButton: {
-    padding: 4,
-  },
-  subcategoriesContainer: {
-    backgroundColor: '#f8f9fa',
-    paddingLeft: 20,
-  },
-  subcategoryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  subcategoryIcon: {
-    marginRight: 12,
-  },
-  subcategoryText: {
-    color: '#666',
-    flex: 1,
   },
 });
 

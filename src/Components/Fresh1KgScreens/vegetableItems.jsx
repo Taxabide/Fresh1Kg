@@ -18,6 +18,7 @@ const VegetableItems = () => {
 
   const originalCategories = [
     {
+      
       id: 1,
       title: 'Root\nVegetables',
       image: require('../../assets/images/root.png'),

@@ -14,20 +14,29 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateCartItemQuantity, removeCartItem, fetchCart } from '../../redux/actions/cartActions';
 
-const CartMenu = () => {
+const CartMenu = ({ navigation }) => {
   const dispatch = useDispatch();
   const cartItems = useSelector(state => state.cart.items);
   const user = useSelector(state => state.user.user);
   const cartLoading = useSelector(state => state.cart.loading);
   const cartError = useSelector(state => state.cart.error);
+  const [selectedItems, setSelectedItems] = useState({});
+  const [itemCounts, setItemCounts] = useState({});
 
   useEffect(() => {
     if (user && user.u_id) {
       dispatch(fetchCart(user.u_id));
-    } else {
-      // 
     }
   }, [dispatch, user]);
+
+  useEffect(() => {
+    // Initialize item counts with current quantities
+    const initialCounts = {};
+    cartItems.forEach(item => {
+      initialCounts[item.cart_id] = item.quantity;
+    });
+    setItemCounts(initialCounts);
+  }, [cartItems]);
 
   const updateQuantity = (id, increment) => {
     const change = increment ? 1 : -1;
@@ -59,18 +68,64 @@ const CartMenu = () => {
     );
   };
 
-  const getTotalAmount = () => {
-    return cartItems.reduce((total, item) => total + (item.p_price * item.quantity), 0);
+  // Toggle item selection
+  const toggleItemSelection = (cartId) => {
+    setSelectedItems(prev => ({
+      ...prev,
+      [cartId]: !prev[cartId]
+    }));
   };
 
-  const getTotalSavings = () => {
-    return cartItems.reduce((total, item) => 
-      total + ((item.original_price - item.p_price) * item.quantity), 0
-    );
+  // Update item count
+  const updateItemCount = (cartId, increment) => {
+    setItemCounts(prev => {
+      const currentCount = prev[cartId] || 0;
+      const newCount = increment ? currentCount + 1 : Math.max(1, currentCount - 1);
+      return {
+        ...prev,
+        [cartId]: newCount
+      };
+    });
+  };
+
+  // Get selected items total with updated counts
+  const getSelectedTotal = () => {
+    return cartItems
+      .filter(item => selectedItems[item.cart_id])
+      .reduce((total, item) => total + (item.p_price * (itemCounts[item.cart_id] || item.quantity)), 0);
+  };
+
+  // Get selected items savings with updated counts
+  const getSelectedSavings = () => {
+    return cartItems
+      .filter(item => selectedItems[item.cart_id])
+      .reduce((total, item) => 
+        total + ((item.original_price - item.p_price) * (itemCounts[item.cart_id] || item.quantity)), 0);
+  };
+
+  // Get selected items count
+  const getSelectedCount = () => {
+    return Object.values(selectedItems).filter(Boolean).length;
+  };
+
+  // Check if any items are selected
+  const hasSelectedItems = () => {
+    return getSelectedCount() > 0;
   };
 
   const CartItem = ({ item }) => (
     <View style={styles.cartItem}>
+      <TouchableOpacity 
+        style={styles.checkbox}
+        onPress={() => toggleItemSelection(item.cart_id)}
+      >
+        <View style={[styles.checkboxInner, selectedItems[item.cart_id] && styles.checkboxChecked]}>
+          {selectedItems[item.cart_id] && (
+            <Icon name="check" size={16} color="#FFFFFF" />
+          )}
+        </View>
+      </TouchableOpacity>
+
       <Image 
         source={{ uri: `https://fresh1kg.com/assets/images/products-images/${String(item.p_image)}` }} 
         style={styles.productImage} 
@@ -97,8 +152,14 @@ const CartMenu = () => {
         </View>
 
         <View style={styles.priceContainer}>
-          <Text style={styles.currentPrice}>₹{String(item.p_price)}</Text>
-          {item.original_price && <Text style={styles.originalPrice}>₹{String(item.original_price)}</Text>}
+          <Text style={styles.currentPrice}>
+            ₹{String((item.p_price * (itemCounts[item.cart_id] || item.quantity)).toLocaleString())}
+          </Text>
+          {item.original_price && (
+            <Text style={styles.originalPrice}>
+              ₹{String((item.original_price * (itemCounts[item.cart_id] || item.quantity)).toLocaleString())}
+            </Text>
+          )}
           <Text style={styles.discount}>25% off</Text>
         </View>
 
@@ -111,16 +172,18 @@ const CartMenu = () => {
           <View style={styles.quantityContainer}>
             <TouchableOpacity
               style={styles.quantityButton}
-              onPress={() => updateQuantity(item.cart_id, false)}
+              onPress={() => updateItemCount(item.cart_id, false)}
             >
               <Icon name="remove" size={16} color="#2874f0" />
             </TouchableOpacity>
             <View style={styles.quantityBox}>
-              <Text style={styles.quantityText}>{String(item.quantity)}</Text>
+              <Text style={styles.quantityText}>
+                {String(itemCounts[item.cart_id] || item.quantity)}
+              </Text>
             </View>
             <TouchableOpacity
               style={styles.quantityButton}
-              onPress={() => updateQuantity(item.cart_id, true)}
+              onPress={() => updateItemCount(item.cart_id, true)}
             >
               <Icon name="add" size={16} color="#2874f0" />
             </TouchableOpacity>
@@ -145,7 +208,7 @@ const CartMenu = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => { /* Implement back navigation */ }}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="#2874f0" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Cart ({String(cartItems.length)})</Text>
@@ -197,19 +260,17 @@ const CartMenu = () => {
             
             <View style={styles.priceRow}>
               <Text style={styles.priceLabel}>
-                Price ({String(cartItems.reduce((sum, item) => sum + item.quantity, 0))} items)
+                Selected Items ({getSelectedCount()})
               </Text>
               <Text style={styles.priceValue}>
-                ₹{String(cartItems.reduce((total, item) => 
-                  total + (item.original_price * item.quantity), 0
-                ).toLocaleString())}
+                ₹{String(getSelectedTotal().toLocaleString())}
               </Text>
             </View>
 
             <View style={styles.priceRow}>
               <Text style={styles.priceLabel}>Discount</Text>
               <Text style={styles.discountValue}>
-                −₹{String(getTotalSavings().toLocaleString())}
+                −₹{String(getSelectedSavings().toLocaleString())}
               </Text>
             </View>
 
@@ -222,11 +283,11 @@ const CartMenu = () => {
 
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total Amount</Text>
-              <Text style={styles.totalAmount}>₹{String(getTotalAmount().toLocaleString())}</Text>
+              <Text style={styles.totalAmount}>₹{String(getSelectedTotal().toLocaleString())}</Text>
             </View>
 
             <Text style={styles.savings}>
-              You will save ₹{String(getTotalSavings().toLocaleString())} on this order
+              You will save ₹{String(getSelectedSavings().toLocaleString())} on this order
             </Text>
           </View>
         </ScrollView>
@@ -240,12 +301,26 @@ const CartMenu = () => {
       {cartItems.length > 0 && (
         <View style={styles.bottomBar}>
           <View style={styles.totalSection}>
-            <Text style={styles.bottomTotal}>₹{String(getTotalAmount().toLocaleString())}</Text>
+            <Text style={styles.bottomTotal}>₹{String(getSelectedTotal().toLocaleString())}</Text>
             <Text style={styles.bottomSavings}>
-              Total Savings ₹{String(getTotalSavings().toLocaleString())}
+              Selected Items: {getSelectedCount()}
             </Text>
           </View>
-          <TouchableOpacity style={styles.placeOrderButton}>
+          <TouchableOpacity 
+            style={[
+              styles.placeOrderButton,
+              cartItems.length === 0 && styles.placeOrderButtonDisabled
+            ]} 
+            onPress={() => {
+              if (cartItems.length === 0) {
+                Alert.alert('Empty Cart', 'Please add items to your cart to place an order.');
+                return;
+              }
+              // Navigate without passing data, as the form will get it from Redux
+              navigation.navigate('PlaceOrderForm');
+            }}
+            disabled={cartItems.length === 0}
+          >
             <Text style={styles.placeOrderText}>PLACE ORDER</Text>
           </TouchableOpacity>
         </View>
@@ -318,6 +393,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 16,
     marginBottom: 8,
+    alignItems: 'center',
   },
   productImage: {
     width: 80,
@@ -575,6 +651,25 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: '#666',
+  },
+  checkbox: {
+    marginRight: 12,
+    justifyContent: 'center',
+  },
+  checkboxInner: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#2874f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#2874f0',
+  },
+  placeOrderButtonDisabled: {
+    backgroundColor: '#BDBDBD',
   },
 });
 

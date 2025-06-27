@@ -5,57 +5,65 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
+  TouchableOpacity,
 } from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+
 // Import your icon libraries
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const PolicyScreen = () => {
+  const navigation = useNavigation();
+
   const policies = [
     {
       id: 1,
-      iconName: 'widgets',
+      iconName: 'eco', // Leaf icon for vegetables
       iconType: 'MaterialIcons',
-      title: 'Wide Assortment',
-      subtitle: 'Huge Variety, Great Selection',
+      title: 'Vegetables',
+      subtitle: 'Fresh & Organic, Farm to Table',
       backgroundColor: '#E8F5E8',
       iconColor: '#4CAF50',
+      categoryId: 2, // Replace with your actual categoryId number for vegetables
     },
     {
       id: 2,
-      iconName: 'refresh-cw',
-      iconType: 'Feather',
-      title: 'Easy Return Policy',
-      subtitle: 'Easy Returns, No Worries',
-      backgroundColor: '#E8F5E8',
-      iconColor: '#4CAF50',
+      iconName: 'apple', // Apple icon for fruits
+      iconType: 'FontAwesome',
+      title: 'Fruits',
+      subtitle: 'Sweet & Juicy, Premium Quality',
+      backgroundColor: '#FFF3E0',
+      iconColor: '#FF9800',
+      categoryId: 1, // Replace with your actual categoryId number for fruits
     },
     {
       id: 3,
-      iconName: 'dollar-sign',
-      iconType: 'Feather',
-      title: 'Best Prices & Offers',
-      subtitle: 'Exclusive Deals, Best Rates',
-      backgroundColor: '#E8F5E8',
-      iconColor: '#4CAF50',
-    },
-    {
-      id: 4,
-      iconName: 'headphones',
-      iconType: 'FontAwesome',
-      title: 'Support 24/7',
-      subtitle: 'Nonstop Help, Always On',
-      backgroundColor: '#E8F5E8',
-      iconColor: '#4CAF50',
+      iconName: 'local-florist', // Flower/natural icon for dry fruits
+      iconType: 'MaterialIcons',
+      title: 'Dry-Fruits',
+      subtitle: 'Premium Nuts, Rich in Nutrition',
+      backgroundColor: '#F3E5F5',
+      iconColor: '#9C27B0',
+      categoryId: 3, // Replace with your actual categoryId number for dry-fruits
     },
   ];
+
+  const handlePolicyPress = (policy) => {
+    navigation.navigate('ProductsScreen', {
+      categoryId: policy.categoryId,
+      title: policy.title,
+    });
+  };
 
   const renderIcon = (iconName, iconType, color, size = 24) => {
     const IconComponent = {
       MaterialIcons: MaterialIcons,
       Feather: Feather,
       FontAwesome: FontAwesome,
+      MaterialCommunityIcons: MaterialCommunityIcons,
     }[iconType];
 
     if (!IconComponent) {
@@ -75,7 +83,12 @@ const PolicyScreen = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {policies.map((policy) => (
-          <View key={policy.id} style={styles.policyItem}>
+          <TouchableOpacity
+            key={policy.id}
+            style={styles.policyItem}
+            onPress={() => handlePolicyPress(policy)}
+            activeOpacity={0.7}
+          >
             <View style={[styles.iconContainer, { backgroundColor: policy.backgroundColor }]}>
               {renderIcon(policy.iconName, policy.iconType, policy.iconColor, 24)}
             </View>
@@ -83,7 +96,13 @@ const PolicyScreen = () => {
               <Text style={styles.title}>{policy.title}</Text>
               <Text style={styles.subtitle}>{policy.subtitle}</Text>
             </View>
-          </View>
+            {/* Optional: Add arrow icon to indicate it's clickable */}
+            <MaterialIcons 
+              name="chevron-right" 
+              size={24} 
+              color="#CCCCCC" 
+            />
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -94,7 +113,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
-    marginTop:-15,
+    marginTop: -15,
   },
   scrollContainer: {
     padding: 16,
