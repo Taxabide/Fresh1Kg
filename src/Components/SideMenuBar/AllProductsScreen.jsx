@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Navbar from '../Navbar/Navbar';
@@ -15,10 +16,12 @@ import {useNavigation} from '@react-navigation/native';
 import {useSelector, useDispatch} from 'react-redux';
 import {searchProducts} from '../../redux/actions/productActions';
 import {addToCart, fetchCart} from '../../redux/actions/cartActions';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ProductsScreen = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const {products: allProducts, loading, error} = useSelector(state => state.products);
   const user = useSelector(state => state.user.user);
   const {categoryId, title} = route.params || {};
@@ -93,17 +96,14 @@ const ProductsScreen = ({route}) => {
             </View>
             <View style={styles.productDetails}>
               <Text style={styles.productName}>{String(product.p_name)}</Text>
-              <View style={styles.priceRow}>
-                {product.original_price && <Text style={styles.originalPrice}>₹{String(product.original_price)}</Text>}
-                <Text style={styles.perKg}>₹{String(product.p_price)}</Text>
-              </View>
+             
               <Text style={styles.weight}>
-                Weight - {String(product.p_weight)} {String(product.p_unit)}
+                Weight - {String(product.formatted_weight)}
               </Text>
               <View style={styles.actualPriceRow}>
                 <Text style={styles.actualPriceLabel}>Price - </Text>
                 <Text style={styles.actualPrice}>
-                  ₹{String(product.p_price)}
+                  ₹{String(product.actual_price_per_kg)}
                 </Text>
               </View>
               <TouchableOpacity 
@@ -126,13 +126,23 @@ const ProductsScreen = ({route}) => {
 
   return (
     <View style={styles.container}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#ffffff"
+        translucent={true}
+      />
+      
+      <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
+        <View style={[styles.navbarWrapper, { marginTop: insets.top }]}>
       <Navbar navigation={navigation} />
+        </View>
 
       {title && <Text style={[styles.title, {color: '#7CB342'}]}>{title}</Text>}
 
       {renderProductsGrid()}
 
       <Footer />
+      </SafeAreaView>
     </View>
   );
 };
@@ -140,10 +150,14 @@ const ProductsScreen = ({route}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    paddingBottom: 20,
+    backgroundColor: '#ffffff',
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  navbarWrapper: {
+    backgroundColor: '#ffffff',
   },
   title: {
     fontSize: 24,

@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  StatusBar,
+  Platform,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation, CommonActions } from '@react-navigation/native';
@@ -69,8 +71,9 @@ const Adminnavbar = ({
 
   return (
     <>
+      <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }]}>
         <TouchableOpacity 
           style={styles.hamburgerButton} 
           onPress={onMenuPress}
@@ -102,7 +105,7 @@ const Adminnavbar = ({
             activeOpacity={1} 
             onPress={() => setProfileDropdownVisible(false)}
           />
-          <View style={styles.profileDropdownContainer}>
+          <View style={[styles.profileDropdownContainer, { top: Platform.OS === 'android' ? 70 + StatusBar.currentHeight : 70 }]}>
             <ProfileDropdown />
           </View>
         </>

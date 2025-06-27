@@ -7,6 +7,7 @@ import wishlistDataReducer from './wishlistDataReducer.jsx';
 import contactReducer from './contactReducer.jsx';
 import adminUserReducer from './adminUserReducer.jsx';
 import adminProductReducer from './adminProductReducer.jsx';
+import orderReducer from './orderReducer';
 
 const rootReducer = combineReducers({
   user: userReducer,
@@ -17,6 +18,7 @@ const rootReducer = combineReducers({
   contact: contactReducer,
   adminUsers: adminUserReducer,
   adminProducts: adminProductReducer,
+  orders: orderReducer,
 });
 
 export default rootReducer; 

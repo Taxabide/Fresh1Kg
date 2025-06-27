@@ -98,7 +98,7 @@ const DryFruitScreen = () => {
         <Icon 
           name="heart" 
           size={18} 
-          color={addToWishlistLoading ? '#ccc' : '#e74c3c'} 
+          color={addToWishlistLoading ? '#ccc' : '#ffffff'} 
         />
       </TouchableOpacity>
       <Image 
@@ -110,7 +110,7 @@ const DryFruitScreen = () => {
       />
       <View style={styles.productInfo}>
         <Text style={styles.productName} numberOfLines={2}>{String(item.p_name)}</Text>
-        <Text style={styles.productWeight}>{String(item.p_weight)} {String(item.p_unit)}</Text>
+        <Text style={styles.productWeight}>Weight: {String(item.formatted_weight)} </Text>
         <View style={styles.priceContainer}>
           <Text style={styles.currentPrice}>₹{String(item.p_price)}</Text>
           {item.original_price && <Text style={styles.originalPrice}>₹{String(item.original_price)}</Text>}
@@ -252,25 +252,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: 15,
     width: 30,
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
   },
   productImage: {
     width: '100%',
-    height: 110,
-    borderRadius: 8,
-    marginBottom: 10,
-    resizeMode: 'contain',
+    height: 150,
+    marginBottom: 8,
   },
   productInfo: {
     flex: 1,
@@ -287,13 +280,14 @@ const styles = StyleSheet.create({
   productWeight: {
     fontSize: 12,
     color: '#888',
-    marginBottom: 8,
+    marginBottom: 4,
+    
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    marginTop: 8,
+    marginBottom: 10,
+    
   },
   currentPrice: {
     fontSize: 16,

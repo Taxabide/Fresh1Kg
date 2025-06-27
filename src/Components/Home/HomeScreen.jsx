@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, Dimensions, Platform, StatusBar } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, StyleSheet, ScrollView, Dimensions, Platform, StatusBar, PixelRatio } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Navbar from '../Navbar/Navbar';
 import SlideScreen from '../Fresh1KgScreens/SlideScreen';
@@ -14,19 +14,51 @@ import TrendingProductScreen from '../Fresh1KgScreens/TrendingProductScreen';
 import Footer from '../Footer/Footer';
 import DryFruitScreen from '../Fresh1KgScreens/DryFruitScreen.jsx';
 
-const { width, height } = Dimensions.get('window');
+// Get screen dimensions
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+
+// Scale factors based on design width (assuming 375 is base width)
+const scale = SCREEN_WIDTH / 375;
+const verticalScale = SCREEN_HEIGHT / 812; // assuming 812 is base height (iPhone X)
+
+// Normalize sizing based on scale factor
+const normalize = (size) => {
+  const newSize = size * scale;
+  if (Platform.OS === 'ios') {
+    return Math.round(PixelRatio.roundToNearestPixel(newSize));
+  }
+  return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
+};
+
+// Screen size breakpoints
+const SCREEN = {
+  width: SCREEN_WIDTH,
+  height: SCREEN_HEIGHT,
+  isSmall: SCREEN_WIDTH < 360,
+  isMedium: SCREEN_WIDTH >= 360 && SCREEN_WIDTH < 400,
+  isLarge: SCREEN_WIDTH >= 400 && SCREEN_WIDTH < 600,
+  isTablet: SCREEN_WIDTH >= 600,
+  scale: scale,
+  verticalScale: verticalScale
+};
 
 const HomeScreen = () => {
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
-      <View style={styles.container}>
-        {/* Fixed Navbar */}
-        <View style={styles.navbarWrapper}>
-          <Navbar navigation={navigation} />
-        </View>
+    <View style={styles.container}>
+      {/* Status Bar */}
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#ffffff"
+        translucent={true}
+      />
+      
+      {/* Main Content */}
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        {/* Navbar with proper top spacing */}
+        <Navbar navigation={navigation} />
         
         {/* Scrollable Content */}
         <ScrollView 
@@ -45,34 +77,25 @@ const HomeScreen = () => {
           <TrendingProductScreen />
           <Footer />
         </ScrollView>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  navbarWrapper: {
-    backgroundColor: '#ffffff',
-    elevation: 4, // Android shadow
-    shadowColor: '#000', // iOS shadow
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    zIndex: 1000,
+  safeArea: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    flexGrow: 1,
+    paddingBottom: normalize(SCREEN.isSmall ? 16 : SCREEN.isTablet ? 32 : 24),
   },
 });
 
